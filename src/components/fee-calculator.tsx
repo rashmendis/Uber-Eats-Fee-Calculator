@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Currency, Percent, ArrowRight, ArrowLeft } from 'lucide-react'; // Use Currency icon
+import { Percent, ArrowRight, ArrowLeft } from 'lucide-react'; // Removed Currency icon import
 import { cn } from "@/lib/utils";
 
 const UBER_FEE_PERCENTAGE = 0.30; // 30%
@@ -74,7 +74,7 @@ export default function FeeCalculator() {
           <TabsContent value="with-fee" className="mt-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="item-price" className="flex items-center gap-2">
-                <Currency className="h-4 w-4 text-muted-foreground" />
+                <span className="inline-block w-4 text-center text-muted-foreground">₹</span> {/* Replaced Currency icon */}
                 Item Price (Before Fee)
               </Label>
               <Input
@@ -104,7 +104,7 @@ export default function FeeCalculator() {
                </div>
                <div className="flex justify-between items-center">
                 <Label className="flex items-center gap-2 font-medium">
-                  <Currency className="h-4 w-4 text-accent" />
+                  <span className="inline-block w-4 text-center text-accent">₹</span> {/* Replaced Currency icon */}
                   Total Price (With Fee)
                 </Label>
                 <span className="text-lg font-bold text-accent">
@@ -116,7 +116,7 @@ export default function FeeCalculator() {
           <TabsContent value="without-fee" className="mt-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="total-price" className="flex items-center gap-2">
-                <Currency className="h-4 w-4 text-muted-foreground" />
+                 <span className="inline-block w-4 text-center text-muted-foreground">₹</span> {/* Replaced Currency icon */}
                 Total Price (With Fee)
               </Label>
               <Input
@@ -146,7 +146,7 @@ export default function FeeCalculator() {
                 </div>
                 <div className="flex justify-between items-center">
                  <Label className="flex items-center gap-2 font-medium">
-                   <Currency className="h-4 w-4 text-accent" />
+                   <span className="inline-block w-4 text-center text-accent">₹</span> {/* Replaced Currency icon */}
                    Original Item Price (Before Fee)
                  </Label>
                  <span className="text-lg font-bold text-accent">
