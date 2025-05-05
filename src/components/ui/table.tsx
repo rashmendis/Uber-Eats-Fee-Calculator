@@ -21,7 +21,9 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{children}</thead> // Remove whitespace
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{/* Render children directly inside the thead without extra whitespace */}
+    {children}
+  </thead>
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -52,12 +54,11 @@ const TableFooter = React.forwardRef<
 ))
 TableFooter.displayName = "TableFooter"
 
+// Refactored to single line to prevent whitespace hydration errors
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props}>{children}</tr> // Remove whitespace
-));
+>(({ className, children, ...props }, ref) => <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props}>{children}</tr>);
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
@@ -111,3 +112,4 @@ export {
   TableCell,
   TableCaption,
 }
+
