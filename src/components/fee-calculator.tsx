@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -106,7 +107,7 @@ export default function FeeCalculator() {
     totalPayoutSellerReceives: number | null;
     totalDiscountAmount: number | null;
     totalFeeAmount: number | null;
-    totalFinalCustomerPrice: number | null; // Total price after discount for all items
+    subtotalCustomerPrice: number | null; // Total price after discount for all items
   } | null>(null);
 
   // State to track if an initial calculation has been made for each tab
@@ -321,7 +322,7 @@ export default function FeeCalculator() {
     let totalPayoutSellerReceives = 0;
     let totalDiscountAmount = 0;
     let totalFeeAmount = 0;
-    let totalFinalCustomerPrice = 0;
+    let subtotalCustomerPrice = 0;
     let invalidInput = false;
 
     items.forEach(item => {
@@ -349,12 +350,12 @@ export default function FeeCalculator() {
         totalPayoutSellerReceives += Math.max(0, sellerReceives);
         totalDiscountAmount += Math.max(0, discountAmt);
         totalFeeAmount += Math.max(0, feeAmt);
-        totalFinalCustomerPrice += Math.max(0, priceAfterDiscount);
+        subtotalCustomerPrice += Math.max(0, priceAfterDiscount);
     });
 
     if (invalidInput && items.length === 1 && items[0].sellingPrice === '') {
         // If the only item is empty, treat as null result
-        return { totalPayoutSellerReceives: null, totalDiscountAmount: null, totalFeeAmount: null, totalFinalCustomerPrice: null };
+        return { totalPayoutSellerReceives: null, totalDiscountAmount: null, totalFeeAmount: null, subtotalCustomerPrice: null };
     }
 
 
@@ -362,7 +363,7 @@ export default function FeeCalculator() {
         totalPayoutSellerReceives: totalPayoutSellerReceives,
         totalDiscountAmount: totalDiscountAmount,
         totalFeeAmount: totalFeeAmount,
-        totalFinalCustomerPrice: totalFinalCustomerPrice
+        subtotalCustomerPrice: subtotalCustomerPrice
     };
  }, [getPayoutItemDiscountPercentage]); // Dependency
 
@@ -548,29 +549,41 @@ export default function FeeCalculator() {
 
   // --- Auto-Recalculation Effect ---
   useEffect(() => {
+    // Prevent infinite loops by checking if a calculation has already been performed
+    // for the current inputs. This effect should only run automatically *after* the
+    // initial button click, or when dependent values change *after* the button click.
     if (isLoadingSettings) return;
 
     if (activeTab === 'selling-price' && hasCalculatedSellingPrice && desiredPayoutInput) {
       const results = calculateSellingPriceLogic(desiredPayoutInput, spCalcDiscountPercentage, feePercentage);
-      setSellingPriceCalcResults(results);
-      // DO NOT add to history here automatically
+       // Check if results actually changed before setting state to prevent loops
+       if (JSON.stringify(results) !== JSON.stringify(sellingPriceCalcResults)) {
+            setSellingPriceCalcResults(results);
+            // DO NOT add to history here automatically
+       }
     } else if (activeTab === 'payout' && hasCalculatedPayout && payoutItems.some(item => item.sellingPrice !== '')) {
        const results = calculatePayoutLogic(payoutItems, feePercentage);
-       setPayoutCalcResults(results);
-       // DO NOT add to history here automatically
+       // Check if results actually changed before setting state to prevent loops
+       if (JSON.stringify(results) !== JSON.stringify(payoutCalcResults)) {
+           setPayoutCalcResults(results);
+           // DO NOT add to history here automatically
+       }
     }
-  }, [
-    spCalcDiscountPercentage, // Recalc when discount changes (SP tab)
-    payoutItems, // Recalc when payout items change (Payout tab)
-    feePercentage,      // Recalc when fee changes
-    activeTab,          // Ensure we only recalc the active tab logic
-    isLoadingSettings,  // Wait for settings
-    hasCalculatedSellingPrice, // Only recalc if button was clicked for SP tab
-    hasCalculatedPayout,       // Only recalc if button was clicked for Payout tab
-    desiredPayoutInput,        // Need input value for SP recalc
-    calculateSellingPriceLogic,    // Dependency
-    calculatePayoutLogic           // Dependency
-  ]);
+}, [
+    desiredPayoutInput, // Input value for SP tab
+    spCalcDiscountPercentage, // Derived discount for SP tab
+    payoutItems, // Item array for Payout tab
+    feePercentage, // Global setting
+    activeTab, // Current active tab
+    isLoadingSettings, // Wait for settings
+    hasCalculatedSellingPrice, // Flag for SP tab initial calc
+    hasCalculatedPayout, // Flag for Payout tab initial calc
+    calculateSellingPriceLogic, // Calculation function dependency
+    calculatePayoutLogic, // Calculation function dependency
+    sellingPriceCalcResults, // Current results to prevent loop (SP tab)
+    payoutCalcResults, // Current results to prevent loop (Payout tab)
+]);
+
 
 
   // --- Helper Functions ---
@@ -912,11 +925,11 @@ export default function FeeCalculator() {
 
                 {/* Result Box for 'payout' */}
                  <div className="space-y-3 rounded-lg border bg-background p-4">
-                     {/* Total Final Customer Price - HIGHLIGHTED */}
+                     {/* Subtotal Customer Price - HIGHLIGHTED */}
                      <div className="flex justify-between items-center">
                        <Label className="flex items-center gap-2 font-medium text-base text-primary"> {/* Increased size, primary color */}
                          <span className="font-semibold inline-block min-w-6 text-center text-primary">{currencySymbol}</span>
-                         Total Final Price (Customer Pays)
+                         Subtotal (Customer Pays)
                           <Tooltip delayDuration={100}>
                              <TooltipTrigger asChild>
                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
@@ -926,8 +939,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                        </Label>
-                       <span className={cn("text-xl font-bold text-primary", payoutCalcResults?.totalFinalCustomerPrice !== null ? "" : "text-muted-foreground")}> {/* Increased size, bold, primary color */}
-                         {formatCurrency(payoutCalcResults?.totalFinalCustomerPrice ?? null)}
+                       <span className={cn("text-xl font-bold text-primary", payoutCalcResults?.subtotalCustomerPrice !== null ? "" : "text-muted-foreground")}> {/* Increased size, bold, primary color */}
+                         {formatCurrency(payoutCalcResults?.subtotalCustomerPrice ?? null)}
                        </span>
                      </div>
 
@@ -954,7 +967,7 @@ export default function FeeCalculator() {
                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                              </TooltipTrigger>
                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">Calculated based on the 'Total Final Price (Customer Pays)'.</p>
+                                <p className="text-xs">Calculated based on the 'Subtotal (Customer Pays)'.</p>
                              </TooltipContent>
                           </Tooltip>
                       </Label>

@@ -5,15 +5,15 @@ export interface HistoryEntry {
   id: string;
   timestamp: number;
   /**
-   * 'selling-price': Calculates the Selling Price based on Desired Payout.
-   * 'payout': Calculates the Payout based on Selling Price Before Discount.
-   * NOTE: Payout calculation history is currently only saved for single-item calculations.
+   * 'selling-price': Calculates the Selling Price (Before Discount) based on Desired Payout.
+   * 'payout': Calculates the Total Payout based on Selling Price (Before Discount) and offers for one or more items.
+   * NOTE: Payout calculation history is currently only saved for 'selling-price' type calculations.
    */
   type: 'selling-price' | 'payout';
   /**
-   * The primary value entered by the user.
+   * The primary numeric value entered by the user as the basis for the calculation.
    * If type is 'selling-price', this is the Desired Payout the seller wants to receive.
-   * If type is 'payout', this is the Selling Price *before* any discount was applied.
+   * If type is 'payout' (and stored, currently only for single item 'selling-price'), this might represent the Selling Price Before Discount.
    */
   input: number;
   feePercentage: number;
@@ -31,9 +31,9 @@ export interface HistoryEntry {
    */
   discountAmount: number;
   /**
-   * The calculated main result.
+   * The primary calculated result.
    * If type is 'selling-price', this is the Selling Price *before* discount.
-   * If type is 'payout', this is the Payout the seller receives.
+   * If type is 'payout', this would be the Total Payout the seller receives (currently not stored).
    */
   result: number;
   /**

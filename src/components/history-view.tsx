@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -202,7 +203,7 @@ export default function HistoryView() {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap"> {/* No border-r */}
-                        Final Price
+                        Customer Price
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
