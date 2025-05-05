@@ -6,12 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Minus } from 'lucide-react';
+import { Percent, Plus, Minus, Tag, Info } from 'lucide-react'; // Added Tag, Info
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
 import type { SettingsData } from '@/types/settings'; // Import SettingsData type
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Import Tooltip components
 
 // Function to add history entry directly to localStorage
 const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
@@ -31,10 +36,13 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
     // Avoid adding exact duplicate of the most recent entry based on key properties
     if (currentHistory.length > 0) {
       const lastEntry = currentHistory[0];
-      if (lastEntry.type === newEntry.type &&
-          lastEntry.input === newEntry.input &&
-          lastEntry.result === newEntry.result &&
-          lastEntry.feePercentage === newEntry.feePercentage) { // Check feePercentage too
+      if (
+        lastEntry.type === newEntry.type &&
+        lastEntry.input === newEntry.input &&
+        lastEntry.result === newEntry.result &&
+        lastEntry.feePercentage === newEntry.feePercentage &&
+        lastEntry.discountPercentage === newEntry.discountPercentage // Also check discount
+      ) {
         return; // Don't add exact duplicate
       }
     }
@@ -56,8 +64,9 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
 
 
 export default function FeeCalculator() {
-  const [itemPriceInput, setItemPriceInput] = useState<string>(''); // Renamed for clarity
-  const [sellingPriceInput, setSellingPriceInput] = useState<string>(''); // Renamed from totalPriceInput
+  const [itemPriceInput, setItemPriceInput] = useState<string>('');
+  const [sellingPriceInput, setSellingPriceInput] = useState<string>('');
+  const [discountInput, setDiscountInput] = useState<string>(''); // State for discount input
   const [activeTab, setActiveTab] = useState<'with-fee' | 'without-fee'>('with-fee');
   const [feePercentage, setFeePercentage] = useState<number>(DEFAULT_FEE_PERCENTAGE);
   const [currencySymbol, setCurrencySymbol] = useState<string>(DEFAULT_CURRENCY_SYMBOL);
@@ -92,17 +101,14 @@ export default function FeeCalculator() {
         setCurrencySymbol(settings.currencySymbol);
 
         // Ensure localStorage is up-to-date with potentially corrected/default values
-        // This prevents loops if parsing failed but storage wasn't cleared.
         if (!storedSettings || JSON.stringify(settings) !== storedSettings) {
              localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
         }
 
       } catch (error) {
         console.error("Failed to load or parse settings from localStorage:", error);
-        // Fallback to defaults on error
         setFeePercentage(DEFAULT_FEE_PERCENTAGE);
         setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
-        // Attempt to clear potentially corrupted storage and save defaults
         try {
           localStorage.removeItem(SETTINGS_STORAGE_KEY);
           localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({
@@ -119,12 +125,10 @@ export default function FeeCalculator() {
 
     loadAndUpdateSettings(); // Initial load
 
-     // Add event listener for storage changes to update settings dynamically
      const handleStorageChange = (event: StorageEvent) => {
        if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
           loadAndUpdateSettings(); // Reload settings on change
        } else if (event.key === null || (event.key === SETTINGS_STORAGE_KEY && !event.newValue)) {
-          // Handle storage clear or item removal
           setFeePercentage(DEFAULT_FEE_PERCENTAGE);
           setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
        }
@@ -132,250 +136,478 @@ export default function FeeCalculator() {
 
      window.addEventListener('storage', handleStorageChange);
 
-     // Cleanup listener on component unmount
      return () => {
        window.removeEventListener('storage', handleStorageChange);
      };
 
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, []);
+
+  // Safely parse discount percentage from input
+  const discountPercentage = useMemo(() => {
+    const parsed = parseFloat(discountInput);
+    if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+      return parsed / 100; // Convert to decimal
+    }
+    return 0; // Default to 0% if invalid or empty
+  }, [discountInput]);
 
   const handleItemPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow empty string, or numbers (including decimals)
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setItemPriceInput(value);
     }
   };
 
-  const handleSellingPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { // Renamed from handleTotalPriceInputChange
+  const handleSellingPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-     // Allow empty string, or numbers (including decimals)
      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setSellingPriceInput(value); // Update sellingPriceInput state
+      setSellingPriceInput(value);
+    }
+  };
+
+  const handleDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow empty string, or numbers (including decimals) between 0 and 100
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue) || (numericValue >= 0 && numericValue <= 100)) {
+         setDiscountInput(value);
+      } else if (numericValue < 0) {
+          setDiscountInput('0');
+      } else if (numericValue > 100) {
+          setDiscountInput('100');
+      }
     }
   };
 
    const handleTabChange = (value: string) => {
      const newTab = value as 'with-fee' | 'without-fee';
      setActiveTab(newTab);
-     // Clear the input of the *other* tab when switching
-     if (newTab === 'with-fee') {
-       setSellingPriceInput(''); // Clear selling price input when switching to 'with-fee'
-     } else {
-       setItemPriceInput(''); // Clear item price input when switching to 'without-fee'
-     }
+     // Clear inputs when switching tabs
+     setItemPriceInput('');
+     setSellingPriceInput('');
+     setDiscountInput(''); // Clear discount input as well
    };
 
-  // Calculation for 'Item Price + Fee' tab (Calculate Selling Price: SP = X / (1 - Fee%))
-  const { calculatedSellingPrice, feeAmount: feeAmountForward } = useMemo(() => { // Renamed calculatedTotal
-    const price = parseFloat(itemPriceInput); // This is X (Desired Item Price)
-    if (!isNaN(price) && price >= 0 && !isLoadingSettings && feePercentage < 1) { // Ensure feePercentage is less than 1 (100%)
-      const sellingPrice = price / (1 - feePercentage); // SP = X / (1 - Fee%)
-      const fee = sellingPrice * feePercentage; // Fee = SP * Fee%
-      return { calculatedSellingPrice: sellingPrice, feeAmount: fee }; // Renamed
+  // Calculation for 'Item Price + Fee' tab
+  const {
+    sellingPriceBeforeDiscount, // SP = X / (1 - F%)
+    customerPriceAfterDiscount, // SP * (1 - D%)
+    discountAmountForward,      // SP - (SP * (1 - D%))
+    feeAmountForward            // SP * F%
+  } = useMemo(() => {
+    const desiredPrice = parseFloat(itemPriceInput); // X
+    if (!isNaN(desiredPrice) && desiredPrice >= 0 && !isLoadingSettings && feePercentage < 1) {
+      const spBeforeDiscount = desiredPrice / (1 - feePercentage);
+      const spAfterDiscount = spBeforeDiscount * (1 - discountPercentage);
+      const discountAmt = spBeforeDiscount - spAfterDiscount;
+      const feeAmt = spBeforeDiscount * feePercentage;
+
+      // Handle potential floating point inaccuracies for display consistency
+      // Ensure customer price doesn't become negative due to rounding
+      const finalSpAfterDiscount = Math.max(0, spAfterDiscount);
+      const finalDiscountAmt = Math.max(0, discountAmt) // Ensure discount isn't negative
+
+
+      return {
+        sellingPriceBeforeDiscount: spBeforeDiscount,
+        customerPriceAfterDiscount: finalSpAfterDiscount,
+        discountAmountForward: finalDiscountAmt,
+        feeAmountForward: feeAmt
+      };
     }
-    // Handle edge case where fee percentage is 100% or more (division by zero or negative)
     if (feePercentage >= 1) {
-        return { calculatedSellingPrice: Infinity, feeAmount: Infinity }; // Renamed
+        return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmountForward: 0, feeAmountForward: Infinity };
     }
-    return { calculatedSellingPrice: null, feeAmount: null }; // Renamed
-  }, [itemPriceInput, feePercentage, isLoadingSettings]);
+    return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null };
+  }, [itemPriceInput, feePercentage, discountPercentage, isLoadingSettings]);
 
 
-  // Calculation for 'Selling Price - Fee = Original Item Price' tab
-  // Formula: Original Item Price = Selling Price - (Selling Price * Fee Percentage)
-  const { calculatedItemPrice, feeAmount: feeAmountReverse } = useMemo(() => {
-    const sellingPrice = parseFloat(sellingPriceInput); // Renamed from total
-    // Use the formula: Result = Selling Price - (Selling Price * Fee Percentage)
-    // Fee is calculated as: Fee = Selling Price * Fee Percentage
-    if (!isNaN(sellingPrice) && sellingPrice >= 0 && !isLoadingSettings) {
-        const fee = sellingPrice * feePercentage; // Calculate fee based on selling price
-        const itemPriceResult = sellingPrice - fee; // Calculate result by subtracting the fee from selling price
+  // Calculation for 'Selling Price - Fee' tab
+  const {
+    originalSellingPriceBeforeDiscount, // SP_after_discount / (1 - D%)
+    originalItemPriceSellerReceives,    // SP_before_discount * (1 - F%)
+    discountAmountReverse,              // SP_before_discount - SP_after_discount
+    feeAmountReverse                    // SP_before_discount * F%
+  } = useMemo(() => {
+    const customerPrice = parseFloat(sellingPriceInput); // SP_after_discount
+    if (!isNaN(customerPrice) && customerPrice >= 0 && !isLoadingSettings) {
+      // Avoid division by zero if discount is 100%
+      if (discountPercentage === 1 && customerPrice > 0) {
+         return { originalSellingPriceBeforeDiscount: Infinity, originalItemPriceSellerReceives: Infinity, discountAmountReverse: Infinity, feeAmountReverse: Infinity };
+      }
+       if (discountPercentage === 1 && customerPrice === 0) {
+         // If price is 0 and discount is 100%, original price was also 0
+         return { originalSellingPriceBeforeDiscount: 0, originalItemPriceSellerReceives: 0, discountAmountReverse: 0, feeAmountReverse: 0 };
+      }
 
-        // Ensure result is not negative
-        if (itemPriceResult >= 0) {
-          return { calculatedItemPrice: itemPriceResult, feeAmount: fee };
-        } else {
-           // Fallback case if result is negative (unlikely with this formula if sellingPrice >= 0)
-           return { calculatedItemPrice: 0, feeAmount: sellingPrice };
-        }
+
+      const spBeforeDiscount = customerPrice / (1 - discountPercentage);
+      const feeAmt = spBeforeDiscount * feePercentage;
+      const sellerReceives = spBeforeDiscount * (1 - feePercentage); // Equivalent to spBeforeDiscount - feeAmt
+      const discountAmt = spBeforeDiscount - customerPrice;
+
+      // Ensure results are not negative due to floating point issues
+      const finalSellerReceives = Math.max(0, sellerReceives);
+      const finalDiscountAmt = Math.max(0, discountAmt);
+      const finalFeeAmt = Math.max(0, feeAmt);
+      const finalSpBeforeDiscount = Math.max(0, spBeforeDiscount);
+
+
+      return {
+        originalSellingPriceBeforeDiscount: finalSpBeforeDiscount,
+        originalItemPriceSellerReceives: finalSellerReceives,
+        discountAmountReverse: finalDiscountAmt,
+        feeAmountReverse: finalFeeAmt
+      };
     }
-    return { calculatedItemPrice: null, feeAmount: null };
-  }, [sellingPriceInput, feePercentage, isLoadingSettings]); // Use sellingPriceInput
+    return { originalSellingPriceBeforeDiscount: null, originalItemPriceSellerReceives: null, discountAmountReverse: null, feeAmountReverse: null };
+  }, [sellingPriceInput, feePercentage, discountPercentage, isLoadingSettings]);
 
 
+  // Add to history on blur for 'with-fee' tab
   const handleBlurWithFee = useCallback(() => {
-    if (calculatedSellingPrice !== null && feeAmountForward !== null && !isLoadingSettings && isFinite(calculatedSellingPrice) && isFinite(feeAmountForward)) { // Renamed calculatedTotal
+    if (
+      sellingPriceBeforeDiscount !== null &&
+      customerPriceAfterDiscount !== null &&
+      feeAmountForward !== null &&
+      !isLoadingSettings &&
+      isFinite(sellingPriceBeforeDiscount) &&
+      isFinite(customerPriceAfterDiscount) &&
+      isFinite(feeAmountForward)
+    ) {
       const price = parseFloat(itemPriceInput);
-       // Only add to history if the input is a valid non-negative number
-       if (!isNaN(price) && price >= 0) {
-         addHistoryEntry({
-           type: 'with-fee',
-           input: price, // Input is Desired Item Price (X)
-           feePercentage: feePercentage,
-           fee: feeAmountForward, // Fee = SP * Fee%
-           result: calculatedSellingPrice, // Result is Selling Price (SP) - Renamed
-           currencySymbol: currencySymbol,
-         });
-       }
+      if (!isNaN(price) && price >= 0) {
+        addHistoryEntry({
+          type: 'with-fee',
+          input: price, // Desired Item Price (X)
+          feePercentage: feePercentage,
+          discountPercentage: discountPercentage, // Store discount
+          fee: feeAmountForward,
+          // 'result' represents the selling price *before* discount was applied
+          result: sellingPriceBeforeDiscount,
+          // Add discounted price for clarity in history
+          discountAmount: discountAmountForward ?? 0,
+          finalPrice: customerPriceAfterDiscount,
+          currencySymbol: currencySymbol,
+        });
+      }
     }
-  }, [itemPriceInput, calculatedSellingPrice, feeAmountForward, feePercentage, currencySymbol, isLoadingSettings]); // Renamed calculatedTotal
+  }, [
+    itemPriceInput,
+    sellingPriceBeforeDiscount,
+    customerPriceAfterDiscount,
+    feeAmountForward,
+    discountAmountForward,
+    feePercentage,
+    discountPercentage,
+    currencySymbol,
+    isLoadingSettings
+  ]);
 
+  // Add to history on blur for 'without-fee' tab
   const handleBlurWithoutFee = useCallback(() => {
-    if (calculatedItemPrice !== null && feeAmountReverse !== null && !isLoadingSettings) {
-       const sellingPrice = parseFloat(sellingPriceInput); // Renamed from total
-        // Only add to history if the input is a valid non-negative number
-       if (!isNaN(sellingPrice) && sellingPrice >= 0) { // Use sellingPrice
-         addHistoryEntry({
-           type: 'without-fee',
-           input: sellingPrice, // Input is Selling Price - Renamed
-           feePercentage: feePercentage,
-           fee: feeAmountReverse, // Fee calculated based on Selling Price * Fee Percentage
-           result: calculatedItemPrice, // Result is Original Item Price (Selling Price - Fee)
-           currencySymbol: currencySymbol,
-         });
-       }
+    if (
+      originalSellingPriceBeforeDiscount !== null &&
+      originalItemPriceSellerReceives !== null &&
+      feeAmountReverse !== null &&
+      !isLoadingSettings &&
+      isFinite(originalSellingPriceBeforeDiscount) &&
+      isFinite(originalItemPriceSellerReceives) &&
+      isFinite(feeAmountReverse)
+    ) {
+      const spAfterDiscount = parseFloat(sellingPriceInput); // Customer Price
+      if (!isNaN(spAfterDiscount) && spAfterDiscount >= 0) {
+        addHistoryEntry({
+          type: 'without-fee',
+          input: spAfterDiscount, // Selling Price After Discount (Customer Price)
+          feePercentage: feePercentage,
+          discountPercentage: discountPercentage, // Store discount
+          fee: feeAmountReverse,
+          // 'result' represents the original item price the seller receives
+          result: originalItemPriceSellerReceives,
+          discountAmount: discountAmountReverse ?? 0, // Store calculated discount amount
+          // Add the original selling price before discount for clarity
+          finalPrice: originalSellingPriceBeforeDiscount,
+          currencySymbol: currencySymbol,
+        });
+      }
     }
-  }, [sellingPriceInput, calculatedItemPrice, feeAmountReverse, feePercentage, currencySymbol, isLoadingSettings]); // Use sellingPriceInput
+  }, [
+    sellingPriceInput,
+    originalSellingPriceBeforeDiscount,
+    originalItemPriceSellerReceives,
+    feeAmountReverse,
+    discountAmountReverse,
+    feePercentage,
+    discountPercentage,
+    currencySymbol,
+    isLoadingSettings
+  ]);
 
 
   const formatCurrency = (value: string | number | null) => {
     if (value === null || value === undefined || value === '') return '-';
-    // Handle Infinity case
     if (!isFinite(Number(value))) return 'N/A';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
-    // Handle negative zero explicitly if it occurs
     if (Object.is(numberValue, -0)) {
        return `${currencySymbol} 0.00`;
     }
     return `${currencySymbol} ${numberValue.toFixed(2)}`;
   };
 
-  const displayFeePercentage = (feePercentage * 100).toFixed(1); // Display with one decimal place
+  const displayFeePercentage = (feePercentage * 100).toFixed(1);
+  const displayDiscountPercentage = (discountPercentage * 100).toFixed(1); // Discount percentage for display
+
 
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
-        <CardDescription>
-          Calculate prices in {isLoadingSettings ? '...' : currencySymbol} with or without the {isLoadingSettings ? '...' : `${displayFeePercentage}%`} fee.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {isLoadingSettings ? (
-          <div className="flex justify-center items-center h-40">
-            <p className="text-muted-foreground">Loading settings...</p>
-          </div>
-        ) : (
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="with-fee">Item Price + Fee</TabsTrigger>
-              <TabsTrigger value="without-fee">Selling Price - Fee</TabsTrigger> {/* Updated Tab Trigger Label */}
-            </TabsList>
-            <TabsContent value="with-fee" className="mt-6 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="item-price-input" className="flex items-center gap-2">
-                  <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                  Desired Item Price (Before Fee)
-                </Label>
-                <Input
-                  id="item-price-input"
-                  type="text"
-                  inputMode="decimal" // Better mobile keyboard support
-                  placeholder={`e.g., 1000.00`}
-                  value={itemPriceInput}
-                  onChange={handleItemPriceInputChange}
-                  onBlur={handleBlurWithFee}
-                  className="bg-secondary focus:ring-accent text-base"
-                  aria-label="Desired Item Price"
-                />
-                 <p className="text-xs text-muted-foreground">
-                    Calculates the Selling Price needed: Selling Price = Desired Price / (1 - Fee %)
-                  </p>
-              </div>
+    <TooltipProvider> {/* Wrap with TooltipProvider */}
+      <Card className="w-full shadow-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Uber Eats Price Calculator</CardTitle> {/* Updated Title */}
+          <CardDescription>
+            Calculate selling prices in {isLoadingSettings ? '...' : currencySymbol} with fee, and optional discount.
+            Current Fee: {isLoadingSettings ? '...' : `${displayFeePercentage}%`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoadingSettings ? (
+            <div className="flex justify-center items-center h-48"> {/* Increased height */}
+              <p className="text-muted-foreground">Loading settings...</p>
+            </div>
+          ) : (
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="with-fee">Item Price + Fee</TabsTrigger>
+                <TabsTrigger value="without-fee">Selling Price - Fee</TabsTrigger>
+              </TabsList>
 
-              {/* Separator/Icon */}
-              <div className="flex items-center justify-center text-muted-foreground space-x-2">
-                 <Plus className="h-4 w-4" />
-                 <span className="text-xs">Fee</span>
-              </div>
-
-              {/* Result Box */}
-              <div className="space-y-3 rounded-lg border bg-background p-4">
-                 <div className="flex justify-between items-center">
-                   <Label className="flex items-center gap-2 font-medium text-sm">
-                      <Percent className="h-4 w-4 text-accent" />
-                      Calculated Fee ({displayFeePercentage}%)
-                   </Label>
-                   <span className={cn("font-semibold text-sm", feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
-                     {formatCurrency(feeAmountForward)}
-                   </span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                  <Label className="flex items-center gap-2 font-medium text-sm">
-                    <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                    Required Selling Price (Inc. Fee) {/* Updated Label */}
-                  </Label>
-                  <span className="text-lg font-bold text-accent">
-                     {formatCurrency(calculatedSellingPrice)} {/* Renamed calculatedTotal */}
-                  </span>
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="without-fee" className="mt-6 space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="selling-price-input" className="flex items-center gap-2"> {/* Renamed htmlFor */}
-                   <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                   Selling Price (Inc. Fee) {/* Updated Label */}
-                </Label>
-                <Input
-                  id="selling-price-input" // Renamed id
-                  type="text"
-                  inputMode="decimal" // Better mobile keyboard support
-                  placeholder={`e.g., 1300.00`}
-                  value={sellingPriceInput} // Use sellingPriceInput state
-                  onChange={handleSellingPriceInputChange} // Use renamed handler
-                  onBlur={handleBlurWithoutFee}
-                  className="bg-secondary focus:ring-accent text-base"
-                  aria-label="Selling Price (Including Fee)" // Updated aria-label
-                />
+              {/* Common Discount Input Section */}
+              <div className="mt-6 mb-4 space-y-2">
+                 <Label htmlFor="discount-input" className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    Optional Discount Percentage
+                    <Tooltip delayDuration={100}>
+                        <TooltipTrigger asChild>
+                           <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-xs">
+                           <p className="text-xs">Enter the discount percentage (0-100) offered to the customer. This affects the final price the customer sees.</p>
+                        </TooltipContent>
+                     </Tooltip>
+                 </Label>
+                 <Input
+                    id="discount-input"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="e.g., 10 or 15.5 (0-100)"
+                    value={discountInput}
+                    onChange={handleDiscountInputChange}
+                    // Blur handlers added to specific tabs where needed
+                    className="bg-secondary focus:ring-accent text-base"
+                    aria-label="Optional Discount Percentage"
+                 />
                  <p className="text-xs text-muted-foreground">
-                    Calculates the Original Price: Original Item Price = Selling Price - (Selling Price * Fee %) {/* Updated Description */}
+                    Leave blank or 0 if no discount is applied. Current: {displayDiscountPercentage}%
                  </p>
               </div>
 
-              {/* Separator/Icon */}
-               <div className="flex items-center justify-center text-muted-foreground space-x-2">
-                  <Minus className="h-4 w-4" />
-                  <span className="text-xs">Fee</span>
-               </div>
+              {/* With Fee Tab */}
+              <TabsContent value="with-fee" className="mt-2 space-y-6"> {/* Reduced top margin */}
+                <div className="space-y-2">
+                  <Label htmlFor="item-price-input" className="flex items-center gap-2">
+                    <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                    Desired Item Price (Seller Receives)
+                  </Label>
+                  <Input
+                    id="item-price-input"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={`e.g., 1000.00`}
+                    value={itemPriceInput}
+                    onChange={handleItemPriceInputChange}
+                    onBlur={handleBlurWithFee} // Add history on blur
+                    className="bg-secondary focus:ring-accent text-base"
+                    aria-label="Desired Item Price (Seller Receives)"
+                  />
+                   <p className="text-xs text-muted-foreground">
+                     The amount you want after the Uber fee is deducted.
+                   </p>
+                </div>
 
-              {/* Result Box */}
-               <div className="space-y-3 rounded-lg border bg-background p-4">
-                  <div className="flex justify-between items-center">
-                    <Label className="flex items-center gap-2 font-medium text-sm">
-                       <Percent className="h-4 w-4 text-accent" />
-                       Calculated Fee ({displayFeePercentage}%)
-                    </Label>
-                    <span className={cn("font-semibold text-sm", feeAmountReverse !== null ? "text-foreground" : "text-muted-foreground")}>
-                      {formatCurrency(feeAmountReverse)}
-                    </span>
+                {/* Result Box for 'with-fee' */}
+                <div className="space-y-3 rounded-lg border bg-background p-4">
+                    {/* Selling Price Before Discount */}
+                    <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm">
+                          <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                          Selling Price (Before Discount)
+                          <Tooltip delayDuration={100}>
+                              <TooltipTrigger asChild>
+                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                 <p className="text-xs">Calculated as: Desired Price / (1 - Fee %). This is the base price before any customer discount.</p>
+                              </TooltipContent>
+                           </Tooltip>
+                       </Label>
+                       <span className={cn("font-semibold text-sm", sellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(sellingPriceBeforeDiscount)}
+                       </span>
+                     </div>
+
+                    {/* Calculated Fee */}
+                    <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm">
+                          <Percent className="h-4 w-4 text-muted-foreground" />
+                          Uber Fee ({displayFeePercentage}%)
+                       </Label>
+                       <span className={cn("font-semibold text-sm", feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(feeAmountForward)}
+                       </span>
+                     </div>
+
+                     {/* Discount Amount */}
+                     {discountPercentage > 0 && (
+                        <div className="flex justify-between items-center">
+                          <Label className="flex items-center gap-2 font-medium text-sm text-green-600 dark:text-green-400">
+                            <Tag className="h-4 w-4" />
+                             Discount Amount ({displayDiscountPercentage}%)
+                          </Label>
+                          <span className="font-semibold text-sm text-green-600 dark:text-green-400">
+                            - {formatCurrency(discountAmountForward)}
+                          </span>
+                        </div>
+                     )}
+
+                     {/* Separator */}
+                     <div className="border-t border-border my-2"></div>
+
+                     {/* Final Customer Price */}
+                     <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm">
+                         <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
+                         Final Price (Customer Pays)
+                         <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top" className="max-w-xs">
+                             <p className="text-xs">This is the price displayed to the customer after the discount (if any) is applied.</p>
+                           </TooltipContent>
+                         </Tooltip>
+                       </Label>
+                       <span className="text-lg font-bold text-accent">
+                         {formatCurrency(customerPriceAfterDiscount)}
+                       </span>
+                     </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                   <Label className="flex items-center gap-2 font-medium text-sm">
-                     <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                     Original Item Price (After Fee) {/* Updated Label */}
-                   </Label>
-                   <span className="text-lg font-bold text-accent">
-                      {formatCurrency(calculatedItemPrice)}
-                   </span>
+              </TabsContent>
+
+              {/* Without Fee Tab */}
+              <TabsContent value="without-fee" className="mt-2 space-y-6"> {/* Reduced top margin */}
+                <div className="space-y-2">
+                  <Label htmlFor="selling-price-input" className="flex items-center gap-2">
+                     <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                     Selling Price (Customer Pays)
+                  </Label>
+                  <Input
+                    id="selling-price-input"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder={`e.g., 1300.00`}
+                    value={sellingPriceInput}
+                    onChange={handleSellingPriceInputChange}
+                    onBlur={handleBlurWithoutFee} // Add history on blur
+                    className="bg-secondary focus:ring-accent text-base"
+                    aria-label="Selling Price (Customer Pays)"
+                  />
+                   <p className="text-xs text-muted-foreground">
+                     The final price the customer pays, including any discount.
+                   </p>
+                </div>
+
+                {/* Result Box for 'without-fee' */}
+                 <div className="space-y-3 rounded-lg border bg-background p-4">
+                    {/* Original Selling Price Before Discount */}
+                     <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm">
+                         <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                         Original Price (Before Discount)
+                         <Tooltip delayDuration={100}>
+                             <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                             </TooltipTrigger>
+                             <TooltipContent side="top" className="max-w-xs">
+                                <p className="text-xs">Calculated as: Customer Price / (1 - Discount %). This was the price before the customer discount was applied.</p>
+                             </TooltipContent>
+                          </Tooltip>
+                       </Label>
+                       <span className={cn("font-semibold text-sm", originalSellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(originalSellingPriceBeforeDiscount)}
+                       </span>
+                     </div>
+
+                     {/* Discount Amount */}
+                     {discountPercentage > 0 && (
+                        <div className="flex justify-between items-center">
+                           <Label className="flex items-center gap-2 font-medium text-sm text-destructive"> {/* Red for deduction */}
+                              <Tag className="h-4 w-4" />
+                              Discount Given ({displayDiscountPercentage}%)
+                           </Label>
+                           <span className="font-semibold text-sm text-destructive">
+                              - {formatCurrency(discountAmountReverse)}
+                           </span>
+                        </div>
+                     )}
+
+                    {/* Uber Fee */}
+                    <div className="flex justify-between items-center">
+                      <Label className="flex items-center gap-2 font-medium text-sm text-destructive"> {/* Red for deduction */}
+                         <Percent className="h-4 w-4" />
+                         Uber Fee ({displayFeePercentage}%)
+                         <Tooltip delayDuration={100}>
+                             <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                             </TooltipTrigger>
+                             <TooltipContent side="top" className="max-w-xs">
+                                <p className="text-xs">Calculated based on the Original Price (Before Discount).</p>
+                             </TooltipContent>
+                          </Tooltip>
+                      </Label>
+                      <span className={cn("font-semibold text-sm text-destructive", feeAmountReverse !== null ? "" : "text-muted-foreground")}>
+                         - {formatCurrency(feeAmountReverse)}
+                      </span>
+                    </div>
+
+                    {/* Separator */}
+                    <div className="border-t border-border my-2"></div>
+
+                    {/* Original Item Price Seller Receives */}
+                    <div className="flex justify-between items-center">
+                     <Label className="flex items-center gap-2 font-medium text-sm">
+                       <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
+                       Item Price (Seller Receives)
+                       <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top" className="max-w-xs">
+                              <p className="text-xs">This is the amount the seller receives after the Uber fee (calculated on the pre-discount price) is deducted.</p>
+                           </TooltipContent>
+                        </Tooltip>
+                     </Label>
+                     <span className="text-lg font-bold text-accent">
+                        {formatCurrency(originalItemPriceSellerReceives)}
+                     </span>
+                   </div>
                  </div>
-               </div>
-            </TabsContent>
-          </Tabs>
-        )}
-      </CardContent>
-    </Card>
+              </TabsContent>
+            </Tabs>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }

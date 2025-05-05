@@ -5,28 +5,37 @@ export interface HistoryEntry {
   id: string;
   timestamp: number;
   /**
-   * 'with-fee': Input is Desired Item Price (X), Result is Selling Price (SP = X / (1 - Fee%))
-   * 'without-fee': Input is Selling Price (Inc. Fee), Result is Original Item Price (Input - Fee)
+   * 'with-fee': Input is Desired Item Price (X), Result is Selling Price *before* discount.
+   * 'without-fee': Input is Selling Price After Discount (Customer Price), Result is Original Item Price Seller Receives.
    */
   type: 'with-fee' | 'without-fee';
   /**
-   * The value entered by the user.
-   * If type is 'with-fee', this is the Desired Item Price (X).
-   * If type is 'without-fee', this is the Selling Price (Including Fee).
+   * The primary value entered by the user.
+   * If type is 'with-fee', this is the Desired Item Price (X) the seller wants to receive.
+   * If type is 'without-fee', this is the Selling Price the customer pays (after any discount).
    */
   input: number;
-  feePercentage: number; // Added fee percentage used for calculation
+  feePercentage: number;
+  discountPercentage: number; // Discount percentage applied (0-1)
   /**
-   * The calculated fee amount.
-   * If type is 'with-fee', Fee = Selling Price * Fee%.
-   * If type is 'without-fee', Fee = Selling Price * Fee%.
+   * The calculated fee amount based on the Selling Price *before* discount.
    */
   fee: number;
   /**
-   * The calculated result.
-   * If type is 'with-fee', this is the Selling Price (SP).
-   * If type is 'without-fee', this is the Original Item Price (Selling Price - Fee).
+   * The calculated discount amount.
+   */
+  discountAmount: number;
+  /**
+   * The calculated main result.
+   * If type is 'with-fee', this is the Selling Price *before* discount (SP = X / (1 - Fee%)).
+   * If type is 'without-fee', this is the Original Item Price the seller receives (SP_before_discount * (1 - Fee%)).
    */
   result: number;
-  currencySymbol: string; // Added currency symbol used for calculation
+  /**
+   * The final price relevant to the context.
+   * If type is 'with-fee', this is the Final Price the customer pays (Selling Price after discount).
+   * If type is 'without-fee', this is the Original Selling Price *before* discount was applied.
+   */
+  finalPrice: number;
+  currencySymbol: string;
 }
