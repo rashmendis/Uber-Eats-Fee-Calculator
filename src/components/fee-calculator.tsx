@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator, CircleDollarSign, HandCoins } from 'lucide-react';
+import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator, CircleDollarSign, HandCoins, ReceiptText } from 'lucide-react'; // Added ReceiptText
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history';
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants';
@@ -296,7 +296,6 @@ export default function FeeCalculator() {
     const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
     setCalculatedResultsSellingPrice(results); // Update display state
 
-    // Add to history logic (can be toggled or removed if needed)
     if (
       results.sellingPriceBeforeDiscount !== null &&
       results.customerPriceAfterDiscount !== null &&
@@ -335,7 +334,6 @@ export default function FeeCalculator() {
      const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
      setCalculatedResultsPayout(results); // Update display state
 
-     // Add to history logic (can be toggled or removed if needed)
      if (
        results.itemPriceSellerReceives !== null &&
        results.feeAmountReverse !== null &&
@@ -412,18 +410,18 @@ export default function FeeCalculator() {
 
               {/* Selling Price Calculator Tab */}
               <TabsContent value="selling-price" className="mt-6 space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Grid layout */}
                     {/* Desired Payout Input (Takes 2 columns) */}
                     <div className="space-y-2 sm:col-span-2">
                        <Label htmlFor="item-price-input" className="flex items-center gap-2">
-                          <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                          <ReceiptText className="h-4 w-4 text-muted-foreground" /> {/* Icon */}
                           Desired Payout (Seller Receives)
                        </Label>
                        <Input
                           id="item-price-input"
                           type="text"
                           inputMode="decimal"
-                          placeholder={`e.g., 700.00`}
+                          placeholder={`${currencySymbol} e.g., 700.00`}
                           value={itemPriceInput}
                           onChange={handleItemPriceInputChange}
                           className="bg-secondary focus:ring-accent text-base"
@@ -569,18 +567,18 @@ export default function FeeCalculator() {
 
               {/* Payout Calculator Tab */}
               <TabsContent value="payout" className="mt-6 space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Grid layout */}
                      {/* Selling Price Before Discount Input (Takes 2 columns) */}
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="selling-price-before-discount-input" className="flex items-center gap-2">
-                         <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                         <ReceiptText className="h-4 w-4 text-muted-foreground" /> {/* Icon */}
                          Selling Price (Before Discount)
                       </Label>
                       <Input
                         id="selling-price-before-discount-input"
                         type="text"
                         inputMode="decimal"
-                        placeholder={`e.g., 1000.00`}
+                        placeholder={`${currencySymbol} e.g., 1000.00`}
                         value={sellingPriceBeforeDiscountInput}
                         onChange={handleSellingPriceBeforeDiscountInputChange}
                         className="bg-secondary focus:ring-accent text-base"
