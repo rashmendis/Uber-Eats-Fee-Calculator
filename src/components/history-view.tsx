@@ -147,7 +147,7 @@ export default function HistoryView() {
                    {/* Removed fixed width classes, added consistent padding */}
                    <TableHead className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Timestamp</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Input</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee (%)</TableHead> {/* Ensured consistent padding */}
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee (%)</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee Amt</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Result</TableHead>
                 </TableRow>
@@ -156,18 +156,16 @@ export default function HistoryView() {
                 {history.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3 truncate">
-                      {format(new Date(entry.timestamp), 'PPp')} {/* Simplified date format */}
+                      {format(new Date(entry.timestamp), 'PPp')}
                     </TableCell>
-                    {/* Input column with dynamic label */}
                     <TableCell className="text-right text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                         {formatCurrency(entry.input, entry.currencySymbol)}
                     </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3"> {/* Ensured consistent padding */}
+                    <TableCell className="text-right text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">
                       {formatPercentage(entry.feePercentage)}
                     </TableCell>
                     <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
-                    {/* Result column with dynamic label */}
                     <TableCell className="text-right text-xs sm:text-sm font-medium px-2 py-2 sm:px-4 sm:py-3">
                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                         {formatCurrency(entry.result, entry.currencySymbol)}
