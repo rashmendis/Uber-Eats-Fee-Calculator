@@ -214,10 +214,12 @@ export default function FeeCalculator() {
   const calculateWithFeeLogic = useCallback((priceInput: string, discount: number, fee: number) => {
       const desiredPrice = parseFloat(priceInput); // X
       if (!isNaN(desiredPrice) && desiredPrice >= 0 && fee < 1) {
+        // SP Before Discount is calculated based on the desired price *after* the fee is taken
         const spBeforeDiscount = desiredPrice / (1 - fee);
-        const spAfterDiscount = spBeforeDiscount * (1 - discount);
+        const spAfterDiscount = spBeforeDiscount * (1 - discount); // Customer pays this
         const discountAmt = spBeforeDiscount - spAfterDiscount;
-        const feeAmt = spBeforeDiscount * fee; // Fee is based on Selling Price Before Discount
+        // Fee is calculated based on the Selling Price *Before* the discount
+        const feeAmt = spBeforeDiscount * fee;
 
         // Handle potential floating point inaccuracies for display consistency
         const finalSpAfterDiscount = Math.max(0, spAfterDiscount);
@@ -231,21 +233,25 @@ export default function FeeCalculator() {
         };
       }
       if (fee >= 1) {
+          // Handle 100% fee case to avoid division by zero
           return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmountForward: 0, feeAmountForward: Infinity };
       }
+      // Return nulls if input is invalid
       return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null };
   }, []);
 
   // Calculation logic for 'Selling Price - Fee' tab (reused in button handler)
   const calculateWithoutFeeLogic = useCallback((spInput: string, discount: number, fee: number) => {
+      // The input 'spInput' is the Selling Price *Before* any discount is applied
       const spBeforeDiscount = parseFloat(spInput);
 
       if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
           const discountAmt = spBeforeDiscount * discount; // Discount amount calculated on SP Before Discount
           const priceAfterDiscount = spBeforeDiscount * (1 - discount); // Price customer pays
 
-          // Fee is calculated on Price *After* Discount
+          // The fee is calculated based on the Price *After* the discount has been applied
           const feeAmt = priceAfterDiscount * fee;
+          // The seller receives the Price After Discount minus the Fee Amount calculated on that discounted price
           const sellerReceives = priceAfterDiscount - feeAmt;
 
           // Ensure results are not negative due to floating point issues
@@ -261,6 +267,7 @@ export default function FeeCalculator() {
               finalCustomerPriceReverse: finalCustomerPrice
           };
       }
+      // Return nulls if input is invalid
       return { itemPriceSellerReceives: null, discountAmountReverse: null, feeAmountReverse: null, finalCustomerPriceReverse: null };
   }, []);
 
@@ -275,9 +282,9 @@ export default function FeeCalculator() {
       results.customerPriceAfterDiscount !== null &&
       results.feeAmountForward !== null &&
       !isLoadingSettings &&
-      isFinite(results.sellingPriceBeforeDiscount) &&
-      isFinite(results.customerPriceAfterDiscount) &&
-      isFinite(results.feeAmountForward)
+      isFinite(results.sellingPriceBeforeDiscount) && // Check for Infinity
+      isFinite(results.customerPriceAfterDiscount) && // Check for Infinity
+      isFinite(results.feeAmountForward) // Check for Infinity
     ) {
       const price = parseFloat(itemPriceInput);
       if (!isNaN(price) && price >= 0) {
@@ -302,7 +309,7 @@ export default function FeeCalculator() {
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculateWithFeeLogic,
+    calculateWithFeeLogic, // Include dependency
   ]);
 
   // Calculate and Add to history on button click for 'without-fee' tab
@@ -314,8 +321,8 @@ export default function FeeCalculator() {
       results.itemPriceSellerReceives !== null &&
       results.feeAmountReverse !== null &&
       !isLoadingSettings &&
-      isFinite(results.itemPriceSellerReceives) &&
-      isFinite(results.feeAmountReverse)
+      isFinite(results.itemPriceSellerReceives) && // Check for Infinity (less likely here but good practice)
+      isFinite(results.feeAmountReverse) // Check for Infinity
     ) {
       const spBeforeDiscount = parseFloat(sellingPriceBeforeDiscountInput);
       if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
@@ -340,13 +347,13 @@ export default function FeeCalculator() {
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculateWithoutFeeLogic,
+    calculateWithoutFeeLogic, // Include dependency
   ]);
 
 
   const formatCurrency = (value: string | number | null) => {
     if (value === null || value === undefined || value === '') return '-';
-    if (!isFinite(Number(value))) return 'N/A';
+    if (!isFinite(Number(value))) return 'N/A'; // Display N/A for Infinity
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
     // Handle negative zero
@@ -401,7 +408,6 @@ export default function FeeCalculator() {
                     placeholder={`e.g., 1000.00`}
                     value={itemPriceInput}
                     onChange={handleItemPriceInputChange}
-                    // onBlur={handleBlurWithFee} // Remove onBlur
                     className="bg-secondary focus:ring-accent text-base"
                     aria-label="Desired Item Price (Seller Receives)"
                   />
@@ -431,7 +437,6 @@ export default function FeeCalculator() {
                       placeholder="e.g., 10 or 15.5 (0-100)"
                       value={discountInput}
                       onChange={handleDiscountInputChange}
-                      // onBlur={handleBlurWithFee} // Remove onBlur
                       className="bg-secondary focus:ring-accent text-base"
                       aria-label="Optional Discount Percentage"
                    />
@@ -442,7 +447,7 @@ export default function FeeCalculator() {
 
                 {/* Calculate Button */}
                  <Button onClick={handleCalculateWithFee} className="w-full">
-                   <Calculator className="mr-2 h-4 w-4" /> Calculate & Add to History
+                   <Calculator className="mr-2 h-4 w-4" /> Calculate
                  </Button>
 
                 {/* Result Box for 'with-fee' */}
@@ -537,7 +542,6 @@ export default function FeeCalculator() {
                     placeholder={`e.g., 1300.00`}
                     value={sellingPriceBeforeDiscountInput}
                     onChange={handleSellingPriceBeforeDiscountInputChange}
-                    // onBlur={handleBlurWithoutFee} // Remove onBlur
                     className="bg-secondary focus:ring-accent text-base"
                     aria-label="Selling Price (Before Discount)"
                   />
@@ -567,7 +571,6 @@ export default function FeeCalculator() {
                       placeholder="e.g., 10 or 15.5 (0-100)"
                       value={discountInput}
                       onChange={handleDiscountInputChange}
-                      // onBlur={handleBlurWithoutFee} // Remove onBlur
                       className="bg-secondary focus:ring-accent text-base"
                       aria-label="Optional Discount Percentage"
                    />
@@ -578,7 +581,7 @@ export default function FeeCalculator() {
 
                 {/* Calculate Button */}
                  <Button onClick={handleCalculateWithoutFee} className="w-full">
-                   <Calculator className="mr-2 h-4 w-4" /> Calculate & Add to History
+                   <Calculator className="mr-2 h-4 w-4" /> Calculate
                  </Button>
 
                 {/* Result Box for 'without-fee' */}
