@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -54,15 +55,15 @@ export default function FeeCalculator() {
     if (value === null || value === undefined || value === '') return '-';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
-    // Format for LKR
-    return `LKR ${numberValue.toFixed(2)}`;
+    // Format for Rs.
+    return `Rs. ${numberValue.toFixed(2)}`;
   };
 
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
-        <CardDescription>Calculate prices in LKR with or without the 30% fee.</CardDescription>
+        <CardDescription>Calculate prices in Rs. with or without the 30% fee.</CardDescription> {/* Update currency in description */}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="with-fee" className="w-full">
@@ -80,7 +81,7 @@ export default function FeeCalculator() {
                 id="item-price"
                 type="text" // Use text to allow decimal input handling
                 inputMode="decimal" // Hint for mobile keyboards
-                placeholder="e.g., 1000.00" // Updated placeholder
+                placeholder="e.g., 1000.00"
                 value={itemPrice}
                 onChange={handleItemPriceChange}
                 className="bg-secondary focus:ring-accent"
@@ -122,7 +123,7 @@ export default function FeeCalculator() {
                 id="total-price"
                 type="text"
                 inputMode="decimal"
-                placeholder="e.g., 1300.00" // Updated placeholder
+                placeholder="e.g., 1300.00"
                 value={totalPrice}
                 onChange={handleTotalPriceChange}
                 className="bg-secondary focus:ring-accent"
