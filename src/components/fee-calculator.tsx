@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2 } from 'lucide-react'; // Added PlusCircle, Trash2
+import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2, Hash } from 'lucide-react'; // Added PlusCircle, Trash2, Hash
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history';
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants';
@@ -815,6 +815,11 @@ export default function FeeCalculator() {
                  {/* Item List */}
                  {payoutItems.map((item, index) => (
                     <div key={item.id} className="border rounded-lg p-4 space-y-4 relative bg-secondary/50">
+                      {/* Item Number */}
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
+                         <Hash className="h-4 w-4"/> Item #{index + 1}
+                      </div>
+
                       {/* Remove Button (only if more than one item) */}
                        {payoutItems.length > 1 && (
                            <Button
