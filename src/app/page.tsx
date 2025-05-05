@@ -1,30 +1,41 @@
+
 import FeeCalculator from '@/components/fee-calculator';
-import { Button } from '@/components/ui/button';
-import { History, Settings } from 'lucide-react'; // Import Settings icon
-import Link from 'next/link';
+import SettingsModal from '@/components/settings-modal'; // Corrected import path if needed
+import HistoryView from '@/components/history-view';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { History } from 'lucide-react';
 
 export default function Home() {
   return (
     <main className="relative flex min-h-screen flex-col items-center justify-center p-4 sm:p-8 md:p-12 lg:p-24 bg-secondary">
-      {/* Settings Button Top Right */}
+      {/* Settings Modal Trigger Top Right */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-        <Link href="/settings" passHref>
-          <Button variant="outline" size="icon" aria-label="Settings">
-            <Settings className="h-5 w-5" />
-          </Button>
-        </Link>
+        <SettingsModal />
       </div>
 
       <FeeCalculator />
 
-      {/* History Button Below Calculator */}
-      <div className="mt-6">
-        <Link href="/history" passHref>
-          <Button variant="outline">
-            <History className="mr-2 h-4 w-4" />
-            View Calculation History
-          </Button>
-        </Link>
+      {/* History Accordion Below Calculator */}
+      <div className="w-full max-w-md mt-6">
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="history">
+            <AccordionTrigger className="text-sm font-medium hover:no-underline justify-center data-[state=closed]:bg-card data-[state=closed]:border data-[state=closed]:rounded-lg data-[state=closed]:shadow-sm data-[state=open]:rounded-t-lg data-[state=open]:border-x data-[state=open]:border-t data-[state=open]:bg-card data-[state=open]:shadow-sm px-4 py-3">
+               <div className="flex items-center gap-2">
+                  <History className="h-4 w-4" />
+                  <span>View Calculation History</span>
+               </div>
+            </AccordionTrigger>
+            <AccordionContent className="bg-card border-x border-b rounded-b-lg shadow-sm p-0">
+              {/* HistoryView component will be rendered inside the content */}
+              <HistoryView />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
     </main>
   );
