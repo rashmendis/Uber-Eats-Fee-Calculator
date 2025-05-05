@@ -1,5 +1,86 @@
-# Uber-Eats-Fee-Calculator created with Firebase Studio
+# Uber Eats Fee Calculator
 
-This is a NextJS starter in Firebase Studio.
+This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage. It allows users to calculate the final price including the fee or determine the original item price before the fee was added.
 
-To get started, take a look at src/app/page.tsx.
+## Features
+
+*   **Calculate Price with Fee:** Enter the item price and see the total price after the Uber Eats fee is applied.
+*   **Calculate Price without Fee:** Enter the total price (including the fee) and see the original item price before the fee.
+*   **Configurable Settings:**
+    *   Set the fee percentage (defaults to 30%).
+    *   Set the currency symbol (defaults to 'Rs.').
+*   **Calculation History:** View a history of your past calculations.
+*   **Client-Side Storage:** Settings and history are stored locally in your browser's `localStorage`.
+*   **Responsive Design:** Adapts to different screen sizes.
+
+## Architecture
+
+This application is built entirely on the **client-side** using Next.js (App Router) and React.
+
+*   **Frontend Framework:** [Next.js](https://nextjs.org/) (with TypeScript)
+*   **UI Components:** [shadcn/ui](https://ui.shadcn.com/) built on Radix UI and Tailwind CSS.
+*   **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+*   **State Management:** React Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`).
+*   **Data Storage:** Browser `localStorage` is used to persist user settings and calculation history. **There is no backend server.**
+
+## Getting Started
+
+### Prerequisites
+
+*   [Node.js](https://nodejs.org/) (version 20 or later recommended)
+*   [npm](https://www.npmjs.com/) (usually comes with Node.js)
+
+### Installation
+
+1.  Clone the repository:
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+
+### Running the Development Server
+
+To run the app in development mode:
+
+```bash
+npm run dev
+```
+
+This will start the development server, usually on `http://localhost:9002`. The app will automatically reload if you make changes to the code.
+
+## Usage
+
+1.  **Open the App:** Navigate to the running application in your browser.
+2.  **Calculator:**
+    *   Use the "Price + Fee" tab to enter the item price before the fee and see the calculated total.
+    *   Use the "Price - Fee" tab to enter the total price (including the fee) and see the original item price.
+3.  **Settings:**
+    *   Click the gear icon (⚙️) in the top-right corner to open the Settings modal.
+    *   Adjust the "Uber Fee Percentage" and "Currency Symbol".
+    *   Click "Save Changes". Settings are saved in `localStorage`.
+4.  **History:**
+    *   Expand the "View Calculation History" accordion below the calculator.
+    *   Your recent calculations will be displayed in a table.
+    *   Click the "Clear" button within the history section to remove all saved history entries from `localStorage`.
+
+## LocalStorage Details
+
+The application uses the browser's `localStorage` to store data persistently on your machine.
+
+*   **Settings Key:** `uberFeeCalculatorSettings`
+    *   **Format:** JSON string representing an object like `{"feePercentage": 0.3, "currencySymbol": "Rs."}`.
+*   **History Key:** `uberFeeCalculatorHistory`
+    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`with-fee` or `without-fee`), `input` value, `feePercentage` used, calculated `fee`, `result`, and `currencySymbol` used.
+
+## Available Scripts
+
+*   `npm run dev`: Starts the Next.js development server with Turbopack.
+*   `npm run build`: Builds the application for production.
+*   `npm run start`: Starts the production server (requires running `npm run build` first).
+*   `npm run lint`: Runs the Next.js linter.
+*   `npm run typecheck`: Checks TypeScript types.
+```
