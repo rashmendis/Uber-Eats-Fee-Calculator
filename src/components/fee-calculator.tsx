@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Equal, Minus } from 'lucide-react'; // Import Plus, Minus, Equal
+import { Percent, Plus, Minus } from 'lucide-react'; // Removed Equal icon import
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
@@ -277,7 +277,7 @@ export default function FeeCalculator() {
               <div className="flex items-center justify-center text-muted-foreground space-x-2">
                  <Plus className="h-4 w-4" /> {/* Changed from ArrowRight */}
                  <span className="text-xs">Fee</span> {/* Added Fee label */}
-                 <Equal className="h-4 w-4" /> {/* Added Equal sign */}
+                 {/* Removed Equal sign */}
               </div>
 
               {/* Result Box */}
@@ -325,7 +325,7 @@ export default function FeeCalculator() {
                <div className="flex items-center justify-center text-muted-foreground space-x-2">
                   <Minus className="h-4 w-4" />
                   <span className="text-xs">Fee</span>
-                  <Equal className="h-4 w-4" />
+                   {/* Removed Equal sign */}
                </div>
 
               {/* Result Box */}
