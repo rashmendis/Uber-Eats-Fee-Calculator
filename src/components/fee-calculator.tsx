@@ -155,6 +155,17 @@ export default function FeeCalculator() {
     }
   };
 
+   const handleTabChange = (value: string) => {
+     const newTab = value as 'with-fee' | 'without-fee';
+     setActiveTab(newTab);
+     // Clear the input of the *other* tab when switching
+     if (newTab === 'with-fee') {
+       setTotalPriceInput(''); // Clear total price input when switching to 'with-fee'
+     } else {
+       setItemPriceInput(''); // Clear item price input when switching to 'without-fee'
+     }
+   };
+
   // Calculation for 'Item Price + Fee = Total Price' tab
   const { calculatedTotal, feeAmount: feeAmountForward } = useMemo(() => {
     const price = parseFloat(itemPriceInput);
@@ -249,7 +260,7 @@ export default function FeeCalculator() {
             <p className="text-muted-foreground">Loading settings...</p>
           </div>
         ) : (
-          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'with-fee' | 'without-fee')} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="with-fee">Item Price + Fee</TabsTrigger>
               <TabsTrigger value="without-fee">Total Price - Fee</TabsTrigger>
