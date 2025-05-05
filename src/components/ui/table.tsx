@@ -6,13 +6,15 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <div className="relative w-full overflow-auto">
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
-      {...props} // Children are passed down here
-    />
+      {...props} // Spread remaining props
+    >
+      {children} {/* Render children explicitly inside the table */}
+    </table>
   </div>
 ))
 Table.displayName = "Table"
@@ -20,27 +22,31 @@ Table.displayName = "Table"
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>
+    {children} {/* Render children explicitly inside the thead */}
+  </thead>
 ))
 TableHeader.displayName = "TableHeader"
 
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <tbody
     ref={ref}
     className={cn("[&_tr:last-child]:border-0", className)}
     {...props}
-  />
+  >
+     {children} {/* Render children explicitly inside the tbody */}
+  </tbody>
 ))
 TableBody.displayName = "TableBody"
 
 const TableFooter = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <tfoot
     ref={ref}
     className={cn(
@@ -48,61 +54,71 @@ const TableFooter = React.forwardRef<
       className
     )}
     {...props}
-  />
+  >
+     {children} {/* Render children explicitly inside the tfoot */}
+  </tfoot>
 ))
 TableFooter.displayName = "TableFooter"
 
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <tr
     ref={ref}
     className={cn(
       "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
       className
     )}
-    {...props} // Children are passed down here
-  />
+    {...props}
+  >
+    {children} {/* Render children explicitly inside the tr */}
+  </tr>
 ))
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <th
     ref={ref}
     className={cn(
       "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className
     )}
-    {...props} // Children are passed down here
-  />
+    {...props}
+  >
+    {children} {/* Render children explicitly inside the th */}
+  </th>
 ))
 TableHead.displayName = "TableHead"
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
   React.TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <td
     ref={ref}
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
-    {...props} // Children are passed down here
-  />
+    {...props}
+  >
+    {children} {/* Render children explicitly inside the td */}
+  </td>
 ))
 TableCell.displayName = "TableCell"
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
   React.HTMLAttributes<HTMLTableCaptionElement>
->(({ className, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <caption
     ref={ref}
     className={cn("mt-4 text-sm text-muted-foreground", className)}
-    {...props} // Children are passed down here
-  />
+    {...props}
+  >
+    {children} {/* Render children explicitly inside the caption */}
+  </caption>
 ))
 TableCaption.displayName = "TableCaption"
 
