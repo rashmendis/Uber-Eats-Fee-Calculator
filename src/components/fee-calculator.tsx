@@ -330,9 +330,9 @@ export default function FeeCalculator() {
      setCalculatedResultsPayout(null);
      setHasCalculatedSellingPrice(false);
      setHasCalculatedPayout(false);
-     // Reset discount selection to '0%' but keep custom input if it was active
-     // setSelectedDiscountOption('0');
-     // setCustomDiscountInput(''); // Let's keep custom input if they switch back
+     // Reset discount selection to '0%' and clear custom input
+     setSelectedDiscountOption('0');
+     setCustomDiscountInput('');
    };
 
   // Calculate and optionally add to history on button click for 'selling-price' tab
@@ -813,5 +813,3 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
-
-    
