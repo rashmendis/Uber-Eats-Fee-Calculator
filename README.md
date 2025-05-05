@@ -3,11 +3,11 @@
 
 # Uber Eats Fee Calculator - Built with Gemini AI (via Firebase Studio)
 
-This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage. It allows users to calculate the final price including the fee or determine the original item price by subtracting the fee from a given total.
+This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage. It allows users to calculate the final selling price needed based on a desired item price or determine the original item price by subtracting the fee from a given total.
 
 ## Features
 
-*   **Calculate Total Price (Item Price + Fee):** Enter the item price and see the total price after the Uber Eats fee is applied.
+*   **Calculate Selling Price (Based on Desired Price + Fee):** Enter the desired item price you want to receive *after* the fee, and the calculator will determine the required Selling Price using the formula `Selling Price = Desired Price / (1 - Fee Percentage)`.
 *   **Calculate Item Price (Total Price - Fee):** Enter a total price (including the fee) and see the calculated fee and the resulting original item price after that fee is subtracted.
 *   **Configurable Settings:**
     *   Set the fee percentage (defaults to 30%).
@@ -66,13 +66,13 @@ This will start the development server, usually on `http://localhost:9002`. The 
 1.  **Open the App:** Navigate to the running application in your browser.
 2.  **Calculator:**
     *   **Item Price + Fee Tab:**
-        *   Enter the **item price before the fee** in the input field.
-        *   The calculator will show the calculated **Uber Fee** and the **Total Price (Inc. Fee)**.
-        *   *Example:* If you enter `Rs. 1000.00` as the Item Price (and the fee is 30%), it will calculate a fee of `Rs. 300.00` and a total price of `Rs. 1300.00`.
+        *   Enter the **desired item price** (the amount you want to receive *before* the fee is added) in the input field.
+        *   The calculator uses the formula `Selling Price = Desired Price / (1 - Fee Percentage)` to determine the **Total Selling Price** you need to charge. It also shows the calculated **Uber Fee** (Selling Price * Fee Percentage).
+        *   *Example:* If you enter `Rs. 700.00` as the Desired Item Price (and the fee is 30%), it will calculate a required Selling Price of `Rs. 1000.00` (700 / (1 - 0.30)) and a fee of `Rs. 300.00` (1000 * 0.30).
     *   **Total Price - Fee Tab:**
         *   Enter the **total price (including the fee)** in the input field.
-        *   The calculator will determine the fee based on the total price and the configured percentage using the formula: `Item Price = Total Price / (1 + Fee Percentage)`. It will then show the calculated **Uber Fee** and the **Original Item Price**.
-        *   *Example:* If you enter `Rs. 1300.00` as the Total Price (and the fee is 30%), it will calculate an Original Item Price of `Rs. 1000.00` and a fee of `Rs. 300.00`.
+        *   The calculator determines the fee based on the total price and the configured percentage using the formula: `Item Price = Total Price - (Total Price * Fee Percentage)`. It will then show the calculated **Uber Fee** and the **Original Item Price**.
+        *   *Example:* If you enter `Rs. 1000.00` as the Total Price (and the fee is 30%), it will calculate an Original Item Price of `Rs. 700.00` and a fee of `Rs. 300.00`.
 3.  **Settings:**
     *   Click the gear icon (⚙️) in the top-right corner to open the Settings modal.
     *   Adjust the "Uber Fee Percentage" and "Currency Symbol".
@@ -89,7 +89,7 @@ The application uses the browser's `localStorage` to store data persistently on 
 *   **Settings Key:** `uberFeeCalculatorSettings`
     *   **Format:** JSON string representing an object like `{"feePercentage": 0.3, "currencySymbol": "Rs."}`.
 *   **History Key:** `uberFeeCalculatorHistory`
-    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`with-fee` or `without-fee`), `input` value (Item Price for 'with-fee', Total Price for 'without-fee'), `feePercentage` used, calculated `fee`, `result` (Total Price for 'with-fee', Item Price for 'without-fee'), and `currencySymbol` used.
+    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`with-fee` or `without-fee`), `input` value (Desired Item Price for 'with-fee', Total Price for 'without-fee'), `feePercentage` used, calculated `fee`, `result` (Selling Price for 'with-fee', Original Item Price for 'without-fee'), and `currencySymbol` used.
 
 ```json
 [
@@ -97,20 +97,20 @@ The application uses the browser's `localStorage` to store data persistently on 
     "id": "unique_id_1",
     "timestamp": 1678886400000,
     "type": "with-fee",
-    "input": 1000, // Item Price
+    "input": 700, // Desired Item Price (X)
     "feePercentage": 0.30,
-    "fee": 300,
-    "result": 1300, // Total Price
+    "fee": 300, // Fee = Selling Price * 0.30
+    "result": 1000, // Selling Price (SP = 700 / (1 - 0.30))
     "currencySymbol": "Rs."
   },
   {
     "id": "unique_id_2",
     "timestamp": 1678896400000,
     "type": "without-fee",
-    "input": 1300, // Total Price
+    "input": 1000, // Total Price
     "feePercentage": 0.30,
-    "fee": 300,
-    "result": 1000, // Original Item Price
+    "fee": 300, // Fee = Total Price * 0.30
+    "result": 700, // Original Item Price = Total Price - Fee
     "currencySymbol": "Rs."
   }
 ]

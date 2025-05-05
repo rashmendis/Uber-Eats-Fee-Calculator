@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trash2, History as HistoryIcon } from 'lucide-react';
 import { format } from 'date-fns';
@@ -96,8 +95,11 @@ export default function HistoryView() {
     if (value === null || value === undefined || isNaN(value)) return '-';
     const displaySymbol = symbol || DEFAULT_CURRENCY_SYMBOL; // Fallback to default if symbol is somehow missing
     if (Object.is(value, -0)) return `${displaySymbol} 0.00`;
+    // Handle Infinity
+    if (!isFinite(value)) return 'N/A';
     return `${displaySymbol} ${value.toFixed(2)}`;
   };
+
 
   // Function to format percentage
   const formatPercentage = (value: number | null) => {
@@ -107,10 +109,10 @@ export default function HistoryView() {
 
   // Determine label based on calculation type
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Item Price' : 'Total Price';
+      return type === 'with-fee' ? 'Desired Price' : 'Total Price'; // Updated label for 'with-fee'
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Total Price' : 'Item Price';
+      return type === 'with-fee' ? 'Selling Price' : 'Item Price'; // Updated label for 'with-fee'
   };
 
 
@@ -179,3 +181,4 @@ export default function HistoryView() {
     </div>
   );
 }
+

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Minus } from 'lucide-react'; // Removed Equal icon import
+import { Percent, Plus, Minus } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
@@ -166,16 +166,21 @@ export default function FeeCalculator() {
      }
    };
 
-  // Calculation for 'Item Price + Fee = Total Price' tab
+  // Calculation for 'Item Price + Fee' tab (Calculate Selling Price: SP = X / (1 - Fee%))
   const { calculatedTotal, feeAmount: feeAmountForward } = useMemo(() => {
-    const price = parseFloat(itemPriceInput);
-    if (!isNaN(price) && price >= 0 && !isLoadingSettings) { // Allow 0 price
-      const fee = price * feePercentage;
-      const total = price + fee;
-      return { calculatedTotal: total, feeAmount: fee };
+    const price = parseFloat(itemPriceInput); // This is X (Desired Item Price)
+    if (!isNaN(price) && price >= 0 && !isLoadingSettings && feePercentage < 1) { // Ensure feePercentage is less than 1 (100%)
+      const sellingPrice = price / (1 - feePercentage); // SP = X / (1 - Fee%)
+      const fee = sellingPrice * feePercentage; // Fee = SP * Fee%
+      return { calculatedTotal: sellingPrice, feeAmount: fee };
+    }
+    // Handle edge case where fee percentage is 100% or more (division by zero or negative)
+    if (feePercentage >= 1) {
+        return { calculatedTotal: Infinity, feeAmount: Infinity }; // Or handle as error
     }
     return { calculatedTotal: null, feeAmount: null };
   }, [itemPriceInput, feePercentage, isLoadingSettings]);
+
 
   // Calculation for 'Total Price - Fee = Item Price' tab (USER'S REQUESTED FORMULA)
   const { calculatedItemPrice, feeAmount: feeAmountReverse } = useMemo(() => {
@@ -199,16 +204,16 @@ export default function FeeCalculator() {
 
 
   const handleBlurWithFee = useCallback(() => {
-    if (calculatedTotal !== null && feeAmountForward !== null && !isLoadingSettings) {
+    if (calculatedTotal !== null && feeAmountForward !== null && !isLoadingSettings && isFinite(calculatedTotal) && isFinite(feeAmountForward)) {
       const price = parseFloat(itemPriceInput);
        // Only add to history if the input is a valid non-negative number
        if (!isNaN(price) && price >= 0) {
          addHistoryEntry({
            type: 'with-fee',
-           input: price, // Input is Item Price
+           input: price, // Input is Desired Item Price (X)
            feePercentage: feePercentage,
-           fee: feeAmountForward,
-           result: calculatedTotal, // Result is Total Price
+           fee: feeAmountForward, // Fee = SP * Fee%
+           result: calculatedTotal, // Result is Selling Price (SP)
            currencySymbol: currencySymbol,
          });
        }
@@ -235,6 +240,8 @@ export default function FeeCalculator() {
 
   const formatCurrency = (value: string | number | null) => {
     if (value === null || value === undefined || value === '') return '-';
+    // Handle Infinity case
+    if (!isFinite(Number(value))) return 'N/A';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
     // Handle negative zero explicitly if it occurs
@@ -269,7 +276,7 @@ export default function FeeCalculator() {
               <div className="space-y-2">
                 <Label htmlFor="item-price-input" className="flex items-center gap-2">
                   <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                  Item Price
+                  Desired Item Price (Before Fee is Added)
                 </Label>
                 <Input
                   id="item-price-input"
@@ -280,15 +287,17 @@ export default function FeeCalculator() {
                   onChange={handleItemPriceInputChange}
                   onBlur={handleBlurWithFee}
                   className="bg-secondary focus:ring-accent text-base"
-                  aria-label="Item Price"
+                  aria-label="Desired Item Price"
                 />
+                 <p className="text-xs text-muted-foreground">
+                    This calculates the Selling Price needed: Selling Price = Desired Price / (1 - Fee %)
+                  </p>
               </div>
 
               {/* Separator/Icon */}
               <div className="flex items-center justify-center text-muted-foreground space-x-2">
-                 <Plus className="h-4 w-4" /> {/* Changed from ArrowRight */}
-                 <span className="text-xs">Fee</span> {/* Added Fee label */}
-                 {/* Removed Equal sign */}
+                 <Plus className="h-4 w-4" />
+                 <span className="text-xs">Fee</span>
               </div>
 
               {/* Result Box */}
@@ -296,7 +305,7 @@ export default function FeeCalculator() {
                  <div className="flex justify-between items-center">
                    <Label className="flex items-center gap-2 font-medium text-sm">
                       <Percent className="h-4 w-4 text-accent" />
-                      Uber Fee ({displayFeePercentage}%)
+                      Calculated Fee ({displayFeePercentage}%)
                    </Label>
                    <span className={cn("font-semibold text-sm", feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
                      {formatCurrency(feeAmountForward)}
@@ -305,7 +314,7 @@ export default function FeeCalculator() {
                  <div className="flex justify-between items-center">
                   <Label className="flex items-center gap-2 font-medium text-sm">
                     <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                    Total Price (Inc. Fee)
+                    Total Selling Price (Inc. Fee)
                   </Label>
                   <span className="text-lg font-bold text-accent">
                      {formatCurrency(calculatedTotal)}
@@ -330,13 +339,15 @@ export default function FeeCalculator() {
                   className="bg-secondary focus:ring-accent text-base"
                   aria-label="Total Price (Including Fee)"
                 />
+                 <p className="text-xs text-muted-foreground">
+                    This calculates the Original Price: Original Price = Total Price - (Total Price * Fee %)
+                 </p>
               </div>
 
               {/* Separator/Icon */}
                <div className="flex items-center justify-center text-muted-foreground space-x-2">
                   <Minus className="h-4 w-4" />
                   <span className="text-xs">Fee</span>
-                   {/* Removed Equal sign */}
                </div>
 
               {/* Result Box */}
