@@ -6,13 +6,13 @@ export interface HistoryEntry {
   timestamp: number;
   /**
    * 'with-fee': Input is Desired Item Price (X), Result is Selling Price *before* discount.
-   * 'without-fee': Input is Selling Price After Discount (Customer Price), Result is Original Item Price Seller Receives.
+   * 'without-fee': Input is Selling Price *Before* Discount, Result is Original Item Price Seller Receives.
    */
   type: 'with-fee' | 'without-fee';
   /**
    * The primary value entered by the user.
    * If type is 'with-fee', this is the Desired Item Price (X) the seller wants to receive (before fee, before discount).
-   * If type is 'without-fee', this is the Selling Price the customer pays (after any discount).
+   * If type is 'without-fee', this is the Selling Price *before* any discount was applied.
    */
   input: number;
   feePercentage: number;
@@ -34,7 +34,7 @@ export interface HistoryEntry {
   /**
    * The final price relevant to the context.
    * If type is 'with-fee', this is the Final Price the customer pays (Selling Price after discount).
-   * If type is 'without-fee', this is the Original Selling Price *before* discount was applied (Customer Price / (1 - Discount %)).
+   * If type is 'without-fee', this is the Final Price the customer pays (Selling Price *after* discount).
    */
   finalPrice: number;
   currencySymbol: string;

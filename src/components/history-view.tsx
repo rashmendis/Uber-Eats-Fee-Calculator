@@ -37,14 +37,39 @@ export default function HistoryView() {
             typeof entry.feePercentage === 'number' &&
             typeof entry.fee === 'number' &&
             typeof entry.result === 'number'
-          ).map(entry => ({
-             ...entry,
-             currencySymbol: typeof entry.currencySymbol === 'string' && entry.currencySymbol.trim().length > 0 ? entry.currencySymbol.trim() : DEFAULT_CURRENCY_SYMBOL,
-             // Add defaults for potentially missing discount fields for backwards compatibility
-             discountPercentage: typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0,
-             discountAmount: typeof entry.discountAmount === 'number' ? entry.discountAmount : 0,
-             finalPrice: typeof entry.finalPrice === 'number' ? entry.finalPrice : (entry.type === 'with-fee' ? entry.result : entry.input) // Simple fallback
-          }));
+          ).map(entry => {
+            // Ensure finalPrice exists and makes sense based on type
+            let defaultFinalPrice = 0;
+            if(entry.type === 'with-fee') {
+              // For with-fee, final price is SP * (1 - Discount)
+              // If entry.result (SP before disc) and entry.discountPercentage exist
+              if (typeof entry.result === 'number' && typeof entry.discountPercentage === 'number') {
+                defaultFinalPrice = entry.result * (1 - entry.discountPercentage);
+              } else {
+                defaultFinalPrice = entry.result; // Fallback if discount is missing
+              }
+            } else { // without-fee
+              // For without-fee, final price is Customer Pays (Input * (1 - Discount))
+              // If entry.input (SP before disc) and entry.discountPercentage exist
+               if (typeof entry.input === 'number' && typeof entry.discountPercentage === 'number') {
+                 defaultFinalPrice = entry.input * (1 - entry.discountPercentage);
+               } else {
+                 // Cannot reliably calculate fallback if discount missing
+                 defaultFinalPrice = entry.result; // Less ideal fallback
+               }
+            }
+
+
+             return {
+                ...entry,
+                currencySymbol: typeof entry.currencySymbol === 'string' && entry.currencySymbol.trim().length > 0 ? entry.currencySymbol.trim() : DEFAULT_CURRENCY_SYMBOL,
+                // Add defaults for potentially missing discount fields for backwards compatibility
+                discountPercentage: typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0,
+                discountAmount: typeof entry.discountAmount === 'number' ? entry.discountAmount : 0,
+                // Use calculated defaultFinalPrice if finalPrice is missing or invalid
+                finalPrice: typeof entry.finalPrice === 'number' && isFinite(entry.finalPrice) ? entry.finalPrice : defaultFinalPrice
+             }
+          });
 
           setHistory(validHistory);
           // Save back if any entries were corrected
@@ -113,13 +138,13 @@ export default function HistoryView() {
 
   // Determine label based on calculation type
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Desired Price' : 'Customer Price';
+      return type === 'with-fee' ? 'Desired Price' : 'SP (Before Disc)'; // Updated for 'without-fee'
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
       return type === 'with-fee' ? 'SP (Before Disc)' : 'Seller Receives';
   };
   const getFinalPriceLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Customer Price' : 'SP (Before Disc)';
+      return type === 'with-fee' ? 'Customer Price' : 'Customer Price'; // Updated for 'without-fee'
   };
 
 
@@ -148,22 +173,18 @@ export default function HistoryView() {
               No history yet. Make some calculations!
             </div>
           ) : (
-            <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border rounded-lg mx-4 mb-4 relative">
-              {/* Use border-collapse on table */}
-              <Table className="w-full border-collapse">
+             <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border rounded-lg mx-4 mb-4 relative"> {/* Container for sticky header */}
+              <Table className="w-full border-collapse"> {/* Use border-collapse */}
                 {/* Sticky header */}
                 <TableHeader className="sticky top-0 z-10 bg-card border-b">
-                  {/* Remove hover effect from header row */}
-                  <TableRow className="hover:bg-transparent">
-                     {/* Use px-3 py-2 sm:px-4 sm:py-3 consistently for padding */}
-                     {/* Add whitespace-nowrap to prevent wrapping */}
-                     {/* Add border-r to cells for vertical lines */}
+                  <TableRow className="hover:bg-transparent"> {/* Remove hover */}
+                     {/* Add border-r for vertical lines */}
                      <TableHead className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Timestamp</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Input</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Disc (%)</TableHead> {/* Discount % */}
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Disc (%)</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Discount</TableHead> {/* Discount Amt */}
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Discount</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
                         Result
                         <Tooltip delayDuration={100}>
@@ -175,14 +196,14 @@ export default function HistoryView() {
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap"> {/* Last column doesn't need border-r */}
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap"> {/* No border-r */}
                         Final Price
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                               <p className="text-xs">With-Fee: Customer Price<br/>Without-Fee: SP (Before Disc)</p>
+                               <p className="text-xs">With-Fee: Customer Price<br/>Without-Fee: Customer Price</p> {/* Updated tooltip */}
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
@@ -190,14 +211,12 @@ export default function HistoryView() {
                 </TableHeader>
                 <TableBody>
                   {history.map((entry) => (
-                    // Ensure border-b is applied correctly, last:border-b-0 removes border from last row
-                    <TableRow key={entry.id} className="border-b last:border-b-0">
+                    <TableRow key={entry.id} className="border-b last:border-b-0"> {/* Ensure border-b */}
                       {/* Consistent padding and border */}
                       <TableCell className="text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 truncate border-r">
                         {format(new Date(entry.timestamp), 'PPp')}
                       </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
-                          {/* Helper text for input type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                           {formatCurrency(entry.input, entry.currencySymbol)}
                       </TableCell>
@@ -212,12 +231,10 @@ export default function HistoryView() {
                          {formatCurrency(entry.discountAmount, entry.currencySymbol)}
                        </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3 border-r">
-                          {/* Helper text for result type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
                        <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3"> {/* Last column */}
-                          {/* Helper text for final price type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel(entry.type)}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>
@@ -232,3 +249,4 @@ export default function HistoryView() {
     </TooltipProvider>
   );
 }
+
