@@ -70,10 +70,7 @@ const TableRow = React.forwardRef<
       "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
       className
     )}
-    {...props}
-  >{/* Render children directly inside the tr without extra whitespace */}
-    {children}
-  </tr>
+    {...props}>{children}</tr> // Place children immediately after the opening tag
 ))
 TableRow.displayName = "TableRow"
 
@@ -87,10 +84,7 @@ const TableHead = React.forwardRef<
       "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
       className
     )}
-    {...props}
-  >{/* Render children directly inside the th without extra whitespace */}
-    {children}
-  </th>
+    {...props}>{children}</th> // Place children immediately after the opening tag
 ))
 TableHead.displayName = "TableHead"
 
@@ -101,10 +95,7 @@ const TableCell = React.forwardRef<
   <td
     ref={ref}
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
-    {...props}
-  >{/* Render children directly inside the td without extra whitespace */}
-    {children}
-  </td>
+    {...props}>{children}</td> // Place children immediately after the opening tag
 ))
 TableCell.displayName = "TableCell"
 
@@ -115,10 +106,7 @@ const TableCaption = React.forwardRef<
   <caption
     ref={ref}
     className={cn("mt-4 text-sm text-muted-foreground", className)}
-    {...props}
-  >{/* Render children directly inside the caption without extra whitespace */}
-    {children}
-  </caption>
+    {...props}>{children}</caption> // Place children immediately after the opening tag
 ))
 TableCaption.displayName = "TableCaption"
 
