@@ -1,4 +1,4 @@
-# Firebase Studio
+# Uber-Eats-Fee-Calculator created with Firebase Studio
 
 This is a NextJS starter in Firebase Studio.
 
