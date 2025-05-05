@@ -218,10 +218,9 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
             </div>
           ) : (
              <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border-t rounded-b-lg mx-0 mb-0 relative"> {/* Container for sticky header, adjusted border/margins */}
-              <Table className="w-full border-collapse"> {/* Use border-collapse */}
-                {/* Sticky header */}
-                <TableHeader className="sticky top-0 z-10 bg-card border-b">
-                  <TableRow className="hover:bg-transparent"> {/* Remove hover */}
+              <Table className="w-full border-collapse">{/* Ensure no whitespace here */}
+                <TableHeader className="sticky top-0 z-10 bg-card border-b">{/* Ensure no whitespace here */}
+                  <TableRow className="hover:bg-transparent">{/* Ensure no whitespace here */}
                      {/* Add border-r for vertical lines */}
                      {/* Reduced padding in TableHead via ui/table.tsx */}
                      <TableHead className="whitespace-nowrap border-r">Timestamp</TableHead>
@@ -282,9 +281,9 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                      </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody>{/* Ensure no whitespace here */}
                   {filteredHistory.map((entry) => (
-                    <TableRow key={entry.id} className="border-b last:border-b-0"> {/* Ensure border-b */}
+                    <TableRow key={entry.id} className="border-b last:border-b-0">{/* Ensure no whitespace here */}
                       {/* Consistent padding and border */}
                       {/* Reduced padding in TableCell via ui/table.tsx */}
                       <TableCell className="text-xs text-muted-foreground truncate border-r whitespace-nowrap">
