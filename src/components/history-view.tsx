@@ -38,25 +38,17 @@ export default function HistoryView() {
             typeof entry.fee === 'number' &&
             typeof entry.result === 'number'
           ).map(entry => {
-            // Ensure finalPrice exists and makes sense based on type
+             // Ensure finalPrice exists and makes sense based on type and discount
             let defaultFinalPrice = 0;
-            if(entry.type === 'with-fee') {
-              // For with-fee, final price is SP * (1 - Discount)
-              // If entry.result (SP before disc) and entry.discountPercentage exist
-              if (typeof entry.result === 'number' && typeof entry.discountPercentage === 'number') {
-                defaultFinalPrice = entry.result * (1 - entry.discountPercentage);
-              } else {
-                defaultFinalPrice = entry.result; // Fallback if discount is missing
-              }
-            } else { // without-fee
-              // For without-fee, final price is Customer Pays (Input * (1 - Discount))
-              // If entry.input (SP before disc) and entry.discountPercentage exist
-               if (typeof entry.input === 'number' && typeof entry.discountPercentage === 'number') {
-                 defaultFinalPrice = entry.input * (1 - entry.discountPercentage);
-               } else {
-                 // Cannot reliably calculate fallback if discount missing
-                 defaultFinalPrice = entry.result; // Less ideal fallback
-               }
+            if (typeof entry.input === 'number' && typeof entry.discountPercentage === 'number') {
+              // Final Price (Customer Pays) is always SP Before Discount * (1 - Discount%)
+              defaultFinalPrice = entry.input * (1 - entry.discountPercentage);
+            } else if (entry.type === 'with-fee' && typeof entry.result === 'number') {
+               // Fallback for 'with-fee' if discount missing (older entries)
+               defaultFinalPrice = entry.result; // SP before discount
+            } else {
+                // Cannot reliably calculate fallback for 'without-fee' if discount missing
+                defaultFinalPrice = entry.result; // Less ideal fallback (Seller Receives amount)
             }
 
 
@@ -138,13 +130,13 @@ export default function HistoryView() {
 
   // Determine label based on calculation type
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Desired Price' : 'SP (Before Disc)'; // Updated for 'without-fee'
+      return type === 'with-fee' ? 'Desired Price' : 'SP (Before Disc)';
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
       return type === 'with-fee' ? 'SP (Before Disc)' : 'Seller Receives';
   };
-  const getFinalPriceLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Customer Price' : 'Customer Price'; // Updated for 'without-fee'
+  const getFinalPriceLabel = () => { // Final Price always means Customer Price now
+      return 'Customer Price';
   };
 
 
@@ -203,7 +195,7 @@ export default function HistoryView() {
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                               <p className="text-xs">With-Fee: Customer Price<br/>Without-Fee: Customer Price</p> {/* Updated tooltip */}
+                               <p className="text-xs">Always the final price the Customer Pays (after discount, before fee is added back implicitly by Uber).</p> {/* <<< UPDATED TOOLTIP */}
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
@@ -235,7 +227,7 @@ export default function HistoryView() {
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
                        <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3"> {/* Last column */}
-                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel(entry.type)}</span>
+                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel()}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>
                     </TableRow>
@@ -249,4 +241,3 @@ export default function HistoryView() {
     </TooltipProvider>
   );
 }
-
