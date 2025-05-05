@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -44,7 +43,7 @@ export default function HistoryView() {
             let defaultFinalPrice = 0;
             // Final Price (Customer Pays) is always SP Before Discount * (1 - Discount%)
             // For 'selling-price' type, result is SP Before Discount
-            // For 'payout' type, input is SP Before Discount
+            // For 'payout' type, input is SP Before Discount (though payout history isn't saved currently)
             const spBeforeDiscount = entry.type === 'selling-price' ? entry.result : entry.input;
             const discountPercentage = typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0; // Ensure discount exists
 
@@ -134,10 +133,14 @@ export default function HistoryView() {
 
   // Determine label based on calculation type - Updated labels
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'selling-price' ? 'Desired Payout' : 'SP (Before Disc)';
+      // For 'selling-price' type, input is 'Desired Payout'
+      // For 'payout' type (not currently saved), input would be item details
+      return type === 'selling-price' ? 'Desired Payout' : 'Input';
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
-      return type === 'selling-price' ? 'SP (Before Disc)' : 'Payout';
+      // For 'selling-price' type, result is 'SP (Before Disc)'
+      // For 'payout' type, result would be 'Total Payout'
+      return type === 'selling-price' ? 'SP (Before Disc)' : 'Result';
   };
   const getFinalPriceLabel = () => { // Final Price always means Customer Price now
       return 'Customer Price';
@@ -219,26 +222,26 @@ export default function HistoryView() {
                     <TableRow key={entry.id} className="border-b last:border-b-0"> {/* Ensure border-b */}
                       {/* Consistent padding and border */}
                       {/* Reduced padding in TableCell via ui/table.tsx */}
-                      <TableCell className="text-xs text-muted-foreground truncate border-r">
+                      <TableCell className="text-xs text-muted-foreground truncate border-r whitespace-nowrap">
                         {format(new Date(entry.timestamp), 'PPp')}
                       </TableCell>
-                      <TableCell className="text-right text-xs sm:text-sm border-r">
+                      <TableCell className="text-right text-xs sm:text-sm border-r whitespace-nowrap">
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                           {formatCurrency(entry.input, entry.currencySymbol)}
                       </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm border-r">
+                       <TableCell className="text-right text-xs sm:text-sm border-r whitespace-nowrap">
                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.feePercentage)}</span>
                          {formatCurrency(entry.fee, entry.currencySymbol)}
                        </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm border-r">
+                       <TableCell className="text-right text-xs sm:text-sm border-r whitespace-nowrap">
                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.discountPercentage)}</span>
                          {formatCurrency(entry.discountAmount, entry.currencySymbol)}
                        </TableCell>
-                      <TableCell className="text-right text-xs sm:text-sm font-medium border-r">
+                      <TableCell className="text-right text-xs sm:text-sm font-medium border-r whitespace-nowrap">
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm font-medium"> {/* Last column */}
+                       <TableCell className="text-right text-xs sm:text-sm font-medium whitespace-nowrap"> {/* Last column */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel()}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>
@@ -253,4 +256,3 @@ export default function HistoryView() {
     </TooltipProvider>
   );
 }
-

@@ -18,14 +18,14 @@ export default function Home() {
         <SettingsModal />
       </div>
 
-      {/* Main Calculator Component - Made wider */}
-      <div className="w-full max-w-[60%] mb-6"> {/* Use max-w-[60%] and add bottom margin */}
+      {/* Main Calculator Component - Responsive Width */}
+      <div className="w-full max-w-xl lg:max-w-[60%] mb-6"> {/* Adjusted width: full on small, max-xl medium, 60% large */}
          <FeeCalculator />
       </div>
 
 
-      {/* History Accordion Below Calculator - Matches calculator width */}
-      <div className="w-full max-w-[60%]"> {/* Use max-w-[60%] */}
+      {/* History Accordion Below Calculator - Responsive Width */}
+      <div className="w-full max-w-xl lg:max-w-[60%]"> {/* Adjusted width: full on small, max-xl medium, 60% large */}
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="history">
             <AccordionTrigger className="text-sm font-medium hover:no-underline justify-center data-[state=closed]:bg-card data-[state=closed]:border data-[state=closed]:rounded-lg data-[state=closed]:shadow-sm data-[state=open]:rounded-t-lg data-[state=open]:border-x data-[state=open]:border-t data-[state=open]:bg-card data-[state=open]:shadow-sm px-4 py-3">

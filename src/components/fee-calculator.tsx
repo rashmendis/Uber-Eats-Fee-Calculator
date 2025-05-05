@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
@@ -642,8 +641,8 @@ export default function FeeCalculator() {
 
               {/* Selling Price Calculator Tab */}
               <TabsContent value="selling-price" className="mt-6 space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Use items-end */}
-                    {/* Desired Payout Input (Takes 2 columns) */}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Use items-end, stack on small screens */}
+                    {/* Desired Payout Input (Takes 2 columns on medium+ screens) */}
                     <div className="space-y-2 sm:col-span-2">
                        <Label htmlFor="desired-payout-input" className="flex items-center gap-2">
                           <ReceiptText className="h-4 w-4 text-muted-foreground" /> {/* Icon */}
@@ -669,7 +668,7 @@ export default function FeeCalculator() {
                        />
                     </div>
 
-                    {/* Offer Dropdown (Takes 1 column) */}
+                    {/* Offer Dropdown (Takes 1 column on medium+ screens) */}
                     <div className="space-y-2">
                        <Label htmlFor="discount-select-selling-price" className="flex items-center gap-2">
                          <Tag className="h-4 w-4 text-muted-foreground" />
@@ -726,10 +725,10 @@ export default function FeeCalculator() {
                  </Button>
 
                 {/* Result Box for 'selling-price' */}
-                <div className="space-y-3 rounded-lg border bg-background p-4">
+                <div className="space-y-3 rounded-lg border bg-background p-3"> {/* Reduced padding */}
                     {/* Selling Price Before Discount - HIGHLIGHTED */}
-                    <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-base"> {/* Increased font size */}
+                    <div className="flex flex-wrap justify-between items-center gap-1"> {/* Allow wrapping */}
+                       <Label className="flex items-center gap-2 font-medium text-base flex-shrink-0"> {/* Increased font size, prevent shrink */}
                           <span className="font-semibold inline-block min-w-6 text-center text-primary">{currencySymbol}</span> {/* Changed color */}
                           Selling Price (Before Discount)
                           <Tooltip delayDuration={100}>
@@ -741,27 +740,27 @@ export default function FeeCalculator() {
                               </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("text-xl font-bold", sellingPriceCalcResults?.sellingPriceBeforeDiscount !== null ? "text-primary" : "text-muted-foreground")}> {/* Increased size and boldness, changed color */}
+                       <span className={cn("text-xl font-bold text-right", sellingPriceCalcResults?.sellingPriceBeforeDiscount !== null ? "text-primary" : "text-muted-foreground")}> {/* Increased size and boldness, changed color, text-right */}
                          {formatCurrency(sellingPriceCalcResults?.sellingPriceBeforeDiscount ?? null)}
                        </span>
                      </div>
 
                       {/* Combined Discount / Offer */}
                       {spCalcDiscountPercentage > 0 && (
-                        <div className="flex justify-between items-center">
-                          <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                        <div className="flex flex-wrap justify-between items-center gap-1">
+                          <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
                             <Minus className="h-4 w-4" />
                             Offer ({displayDiscountPercentage(spCalcDiscountPercentage)}%)
                           </Label>
-                          <span className="font-semibold text-sm text-muted-foreground">
+                          <span className="font-semibold text-sm text-muted-foreground text-right">
                             {formatCurrency(sellingPriceCalcResults?.discountAmount ?? null)}
                           </span>
                         </div>
                       )}
 
                      {/* Final Customer Price - De-emphasized */}
-                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground"> {/* Muted color */}
+                     <div className="flex flex-wrap justify-between items-center gap-1">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0"> {/* Muted color */}
                          <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
                          Final Price (Customer Pays)
                          <Tooltip delayDuration={100}>
@@ -773,14 +772,14 @@ export default function FeeCalculator() {
                            </TooltipContent>
                          </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm text-muted-foreground", sellingPriceCalcResults?.customerPriceAfterDiscount !== null ? "" : "text-muted-foreground")}> {/* Muted color */}
+                       <span className={cn("font-semibold text-sm text-muted-foreground text-right", sellingPriceCalcResults?.customerPriceAfterDiscount !== null ? "" : "text-muted-foreground")}> {/* Muted color */}
                          {formatCurrency(sellingPriceCalcResults?.customerPriceAfterDiscount ?? null)}
                        </span>
                      </div>
 
                      {/* Combined Uber Fee */}
-                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                     <div className="flex flex-wrap justify-between items-center gap-1">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
                          <Minus className="h-4 w-4" />
                          Uber Fee ({displayFeePercentage}%)
                          <Tooltip delayDuration={100}>
@@ -792,7 +791,7 @@ export default function FeeCalculator() {
                            </TooltipContent>
                          </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm text-muted-foreground", sellingPriceCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}>
+                       <span className={cn("font-semibold text-sm text-muted-foreground text-right", sellingPriceCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}>
                          {formatCurrency(sellingPriceCalcResults?.feeAmount ?? null)}
                        </span>
                      </div>
@@ -802,8 +801,8 @@ export default function FeeCalculator() {
 
 
                      {/* Actual Payout (Seller Receives) - Keep Highlighted */}
-                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm">
+                     <div className="flex flex-wrap justify-between items-center gap-1">
+                       <Label className="flex items-center gap-2 font-medium text-sm flex-shrink-0">
                          <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
                          Actual Payout (Seller Receives)
                          <Tooltip delayDuration={100}>
@@ -815,7 +814,7 @@ export default function FeeCalculator() {
                            </TooltipContent>
                          </Tooltip>
                        </Label>
-                       <span className="text-lg font-bold text-accent">
+                       <span className="text-lg font-bold text-accent text-right">
                          {formatCurrency(sellingPriceCalcResults?.actualPayout ?? null)}
                        </span>
                      </div>
@@ -847,8 +846,8 @@ export default function FeeCalculator() {
                            </Button>
                          )}
 
-                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-                           {/* Selling Price Input (Takes 2 columns) */}
+                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Responsive grid */}
+                           {/* Selling Price Input (Takes 2 columns on medium+ screens) */}
                            <div className="space-y-2 sm:col-span-2">
                              <Label htmlFor={`selling-price-${item.id}`} className="flex items-center gap-2">
                                 <ReceiptText className="h-4 w-4 text-muted-foreground" />
@@ -866,7 +865,7 @@ export default function FeeCalculator() {
                              />
                            </div>
 
-                           {/* Offer Dropdown (Takes 1 column) */}
+                           {/* Offer Dropdown (Takes 1 column on medium+ screens) */}
                            <div className="space-y-2">
                              <Label htmlFor={`offer-select-${item.id}`} className="flex items-center gap-2">
                                 <Tag className="h-4 w-4 text-muted-foreground" />
@@ -925,10 +924,10 @@ export default function FeeCalculator() {
                  </Button>
 
                 {/* Result Box for 'payout' */}
-                 <div className="space-y-3 rounded-lg border bg-background p-4">
+                 <div className="space-y-3 rounded-lg border bg-background p-3"> {/* Reduced padding */}
                      {/* Subtotal Customer Price - HIGHLIGHTED */}
-                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-base text-primary"> {/* Increased size, primary color */}
+                     <div className="flex flex-wrap justify-between items-center gap-1">
+                       <Label className="flex items-center gap-2 font-medium text-base text-primary flex-shrink-0"> {/* Increased size, primary color */}
                          <span className="font-semibold inline-block min-w-6 text-center text-primary">{currencySymbol}</span>
                          Subtotal (Customer Pays)
                           <Tooltip delayDuration={100}>
@@ -940,27 +939,27 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                        </Label>
-                       <span className={cn("text-xl font-bold text-primary", payoutCalcResults?.subtotalCustomerPrice !== null ? "" : "text-muted-foreground")}> {/* Increased size, bold, primary color */}
+                       <span className={cn("text-xl font-bold text-primary text-right", payoutCalcResults?.subtotalCustomerPrice !== null ? "" : "text-muted-foreground")}> {/* Increased size, bold, primary color */}
                          {formatCurrency(payoutCalcResults?.subtotalCustomerPrice ?? null)}
                        </span>
                      </div>
 
                      {/* Combined Total Discount */}
                      {payoutItems.some(item => getPayoutItemDiscountPercentage(item) > 0) && (
-                        <div className="flex justify-between items-center">
-                           <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                        <div className="flex flex-wrap justify-between items-center gap-1">
+                           <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
                               <Minus className="h-4 w-4" />
                               Total Discount Given
                            </Label>
-                           <span className="font-semibold text-sm text-muted-foreground">
+                           <span className="font-semibold text-sm text-muted-foreground text-right">
                               {formatCurrency(payoutCalcResults?.totalDiscountAmount ?? null)}
                            </span>
                         </div>
                      )}
 
                      {/* Combined Total Uber Fee */}
-                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                     <div className="flex flex-wrap justify-between items-center gap-1">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
                           <Minus className="h-4 w-4" />
                           Total Uber Fee ({displayFeePercentage}%)
                           <Tooltip delayDuration={100}>
@@ -972,7 +971,7 @@ export default function FeeCalculator() {
                               </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm text-muted-foreground", payoutCalcResults?.totalFeeAmount !== null ? "" : "text-muted-foreground")}>
+                       <span className={cn("font-semibold text-sm text-muted-foreground text-right", payoutCalcResults?.totalFeeAmount !== null ? "" : "text-muted-foreground")}>
                           {formatCurrency(payoutCalcResults?.totalFeeAmount ?? null)}
                        </span>
                      </div>
@@ -982,8 +981,8 @@ export default function FeeCalculator() {
                     <div className="border-t border-border my-2"></div>
 
                     {/* Total Payout (Seller Receives) - Keep Highlighted */}
-                    <div className="flex justify-between items-center">
-                     <Label className="flex items-center gap-2 font-medium text-sm">
+                    <div className="flex flex-wrap justify-between items-center gap-1">
+                     <Label className="flex items-center gap-2 font-medium text-sm flex-shrink-0">
                        <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
                        Total Payout (Seller Receives)
                        <Tooltip delayDuration={100}>
@@ -995,7 +994,7 @@ export default function FeeCalculator() {
                            </TooltipContent>
                         </Tooltip>
                      </Label>
-                     <span className="text-lg font-bold text-accent">
+                     <span className="text-lg font-bold text-accent text-right">
                         {formatCurrency(payoutCalcResults?.totalPayoutSellerReceives ?? null)}
                      </span>
                    </div>
@@ -1009,4 +1008,3 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
-
