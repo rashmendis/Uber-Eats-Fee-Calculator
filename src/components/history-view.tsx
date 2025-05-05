@@ -141,14 +141,15 @@ export default function HistoryView() {
           </div>
         ) : (
           <ScrollArea className="h-[300px] sm:h-[400px] w-full px-4"> {/* Added horizontal padding here */}
-            <Table className="min-w-full table-fixed sm:table-auto">{/* Ensure table takes full width, use table-fixed for small */}
+            <Table className="min-w-full">{/* Removed table-fixed and width classes to allow natural flow */}
               <TableHeader>
                 <TableRow>
-                   <TableHead className="px-2 py-2 sm:px-4 sm:py-3 w-[140px] sm:w-[160px]">Timestamp</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[90px] sm:w-auto">Input</TableHead>
-                   <TableHead className="text-right px-1 py-2 sm:px-4 sm:py-3 w-[55px] sm:w-auto">Fee(%)</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[80px] sm:w-auto">Fee Amt</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[100px] sm:w-auto">Result</TableHead>
+                   {/* Removed fixed width classes, added consistent padding */}
+                   <TableHead className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Timestamp</TableHead>
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Input</TableHead>
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee (%)</TableHead> {/* Ensured consistent padding */}
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee Amt</TableHead>
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -162,7 +163,7 @@ export default function HistoryView() {
                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                         {formatCurrency(entry.input, entry.currencySymbol)}
                     </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground px-1 py-2 sm:px-4 sm:py-3">
+                    <TableCell className="text-right text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3"> {/* Ensured consistent padding */}
                       {formatPercentage(entry.feePercentage)}
                     </TableCell>
                     <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
