@@ -16,7 +16,10 @@ export interface HistoryEntry {
    */
   input: number;
   feePercentage: number;
-  discountPercentage: number; // Discount percentage applied (0-1)
+  /**
+   * Discount percentage applied (0-1), referred to as "Offer" in the UI.
+   */
+  discountPercentage: number;
   /**
    * The calculated fee amount.
    * If type is 'selling-price', fee is based on Selling Price *before* discount.

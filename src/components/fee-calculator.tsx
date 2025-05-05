@@ -6,18 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator, CircleDollarSign, HandCoins } from 'lucide-react'; // Added Calculator, CircleDollarSign, HandCoins icons
+import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator, CircleDollarSign, HandCoins } from 'lucide-react';
 import { cn } from "@/lib/utils";
-import type { HistoryEntry } from '@/types/history'; // Import shared type
-import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
-import type { SettingsData } from '@/types/settings'; // Import SettingsData type
+import type { HistoryEntry } from '@/types/history';
+import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants';
+import type { SettingsData } from '@/types/settings';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"; // Import Tooltip components
-import { Button } from "@/components/ui/button"; // Import Button
+} from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
 
 // Function to add history entry directly to localStorage
 const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
@@ -42,7 +43,7 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
         lastEntry.input === newEntry.input &&
         lastEntry.result === newEntry.result &&
         lastEntry.feePercentage === newEntry.feePercentage &&
-        lastEntry.discountPercentage === newEntry.discountPercentage // Also check discount
+        lastEntry.discountPercentage === newEntry.discountPercentage
       ) {
         return; // Don't add exact duplicate
       }
@@ -66,14 +67,14 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
 
 export default function FeeCalculator() {
   const [itemPriceInput, setItemPriceInput] = useState<string>('');
-  const [sellingPriceBeforeDiscountInput, setSellingPriceBeforeDiscountInput] = useState<string>(''); // State for Selling Price Before Discount
-  const [discountInput, setDiscountInput] = useState<string>(''); // State for discount input
-  const [activeTab, setActiveTab] = useState<'selling-price' | 'payout'>('selling-price'); // Renamed tabs
+  const [sellingPriceBeforeDiscountInput, setSellingPriceBeforeDiscountInput] = useState<string>('');
+  const [selectedDiscountOption, setSelectedDiscountOption] = useState<string>('0'); // '0', '20', '30', '40', '50', '75', 'custom'
+  const [customDiscountInput, setCustomDiscountInput] = useState<string>(''); // State for custom discount input
+  const [activeTab, setActiveTab] = useState<'selling-price' | 'payout'>('selling-price');
   const [feePercentage, setFeePercentage] = useState<number>(DEFAULT_FEE_PERCENTAGE);
   const [currencySymbol, setCurrencySymbol] = useState<string>(DEFAULT_CURRENCY_SYMBOL);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  // State for calculated results (updated on button click) - Renamed
   const [calculatedResultsSellingPrice, setCalculatedResultsSellingPrice] = useState<{
     sellingPriceBeforeDiscount: number | null | typeof Infinity;
     customerPriceAfterDiscount: number | null | typeof Infinity;
@@ -160,14 +161,22 @@ export default function FeeCalculator() {
 
   }, []);
 
-  // Safely parse discount percentage from input
+  // Derive discount percentage based on selected option and custom input
   const discountPercentage = useMemo(() => {
-    const parsed = parseFloat(discountInput);
-    if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
-      return parsed / 100; // Convert to decimal
+    if (selectedDiscountOption === 'custom') {
+      const parsed = parseFloat(customDiscountInput);
+      if (!isNaN(parsed) && parsed >= 0 && parsed <= 100) {
+        return parsed / 100; // Convert to decimal
+      }
+    } else {
+      const parsedOption = parseFloat(selectedDiscountOption);
+      if (!isNaN(parsedOption)) {
+        return parsedOption / 100;
+      }
     }
-    return 0; // Default to 0% if invalid or empty
-  }, [discountInput]);
+    return 0; // Default to 0% if invalid or none
+  }, [selectedDiscountOption, customDiscountInput]);
+
 
   const handleItemPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -183,34 +192,44 @@ export default function FeeCalculator() {
     }
   };
 
-  const handleDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDiscountOptionChange = (value: string) => {
+      setSelectedDiscountOption(value);
+      // Clear custom input if a predefined option is selected
+      if (value !== 'custom') {
+          setCustomDiscountInput('');
+      }
+  };
+
+  const handleCustomDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Allow empty string, or numbers (including decimals) between 0 and 100
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       const numericValue = parseFloat(value);
       if (isNaN(numericValue) || (numericValue >= 0 && numericValue <= 100)) {
-         setDiscountInput(value);
+         setCustomDiscountInput(value);
       } else if (numericValue < 0) {
-          setDiscountInput('0');
+          setCustomDiscountInput('0');
       } else if (numericValue > 100) {
-          setDiscountInput('100');
+          setCustomDiscountInput('100');
       }
     }
   };
 
+
    const handleTabChange = (value: string) => {
-     const newTab = value as 'selling-price' | 'payout'; // Updated tab values
+     const newTab = value as 'selling-price' | 'payout';
      setActiveTab(newTab);
      // Clear inputs and calculated results when switching tabs
      setItemPriceInput('');
      setSellingPriceBeforeDiscountInput('');
-     setDiscountInput('');
-     setCalculatedResultsSellingPrice(null); // Updated state name
-     setCalculatedResultsPayout(null); // Updated state name
+     setSelectedDiscountOption('0'); // Reset discount selection
+     setCustomDiscountInput(''); // Reset custom discount input
+     setCalculatedResultsSellingPrice(null);
+     setCalculatedResultsPayout(null);
    };
 
 
-  // Calculation logic for 'Selling Price Calculator' tab (reused in button handler) - Renamed
+  // Calculation logic for 'Selling Price Calculator' tab
   const calculateSellingPriceLogic = useCallback((priceInput: string, discount: number, fee: number) => {
       const desiredPrice = parseFloat(priceInput); // X
       if (!isNaN(desiredPrice) && desiredPrice >= 0 && fee < 1) {
@@ -240,7 +259,7 @@ export default function FeeCalculator() {
       return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null };
   }, []);
 
-  // Calculation logic for 'Payout Calculator' tab (reused in button handler) - Renamed
+  // Calculation logic for 'Payout Calculator' tab
   const calculatePayoutLogic = useCallback((spInput: string, discount: number, fee: number) => {
       // The input 'spInput' is the Selling Price *Before* any discount is applied
       const spBeforeDiscount = parseFloat(spInput);
@@ -272,31 +291,30 @@ export default function FeeCalculator() {
   }, []);
 
 
-  // Calculate and Add to history on button click for 'selling-price' tab - Renamed
+  // Calculate and optionally add to history on button click for 'selling-price' tab
   const handleCalculateSellingPrice = useCallback(() => {
     const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
     setCalculatedResultsSellingPrice(results); // Update display state
 
+    // Add to history logic (can be toggled or removed if needed)
     if (
       results.sellingPriceBeforeDiscount !== null &&
       results.customerPriceAfterDiscount !== null &&
       results.feeAmountForward !== null &&
       !isLoadingSettings &&
-      isFinite(results.sellingPriceBeforeDiscount) && // Check for Infinity
-      isFinite(results.customerPriceAfterDiscount) && // Check for Infinity
-      isFinite(results.feeAmountForward) // Check for Infinity
+      isFinite(results.sellingPriceBeforeDiscount) &&
+      isFinite(results.customerPriceAfterDiscount) &&
+      isFinite(results.feeAmountForward)
     ) {
       const price = parseFloat(itemPriceInput);
       if (!isNaN(price) && price >= 0) {
         addHistoryEntry({
-          type: 'selling-price', // Updated type
-          input: price, // Desired Item Price (X)
+          type: 'selling-price',
+          input: price,
           feePercentage: feePercentage,
-          discountPercentage: discountPercentage, // Store discount
+          discountPercentage: discountPercentage,
           fee: results.feeAmountForward,
-          // 'result' represents the selling price *before* discount was applied
           result: results.sellingPriceBeforeDiscount,
-          // Add discounted price for clarity in history
           discountAmount: results.discountAmountForward ?? 0,
           finalPrice: results.customerPriceAfterDiscount,
           currencySymbol: currencySymbol,
@@ -309,45 +327,44 @@ export default function FeeCalculator() {
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculateSellingPriceLogic, // Include dependency
+    calculateSellingPriceLogic,
   ]);
 
-  // Calculate and Add to history on button click for 'payout' tab - Renamed
+  // Calculate and optionally add to history on button click for 'payout' tab
   const handleCalculatePayout = useCallback(() => {
      const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
      setCalculatedResultsPayout(results); // Update display state
 
-    if (
-      results.itemPriceSellerReceives !== null &&
-      results.feeAmountReverse !== null &&
-      !isLoadingSettings &&
-      isFinite(results.itemPriceSellerReceives) && // Check for Infinity (less likely here but good practice)
-      isFinite(results.feeAmountReverse) // Check for Infinity
-    ) {
-      const spBeforeDiscount = parseFloat(sellingPriceBeforeDiscountInput);
-      if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
-        addHistoryEntry({
-          type: 'payout', // Updated type
-          input: spBeforeDiscount, // Input is Selling Price Before Discount
-          feePercentage: feePercentage,
-          discountPercentage: discountPercentage, // Store discount
-          fee: results.feeAmountReverse, // Fee calculated on price after discount
-          // 'result' represents what the seller receives
-          result: results.itemPriceSellerReceives,
-          discountAmount: results.discountAmountReverse ?? 0, // Store calculated discount amount (based on SP before discount)
-          // 'finalPrice' represents the price the customer pays (after discount, before fee)
-          finalPrice: results.finalCustomerPriceReverse ?? 0,
-          currencySymbol: currencySymbol,
-        });
-      }
-    }
+     // Add to history logic (can be toggled or removed if needed)
+     if (
+       results.itemPriceSellerReceives !== null &&
+       results.feeAmountReverse !== null &&
+       !isLoadingSettings &&
+       isFinite(results.itemPriceSellerReceives) &&
+       isFinite(results.feeAmountReverse)
+     ) {
+       const spBeforeDiscount = parseFloat(sellingPriceBeforeDiscountInput);
+       if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
+         addHistoryEntry({
+           type: 'payout',
+           input: spBeforeDiscount,
+           feePercentage: feePercentage,
+           discountPercentage: discountPercentage,
+           fee: results.feeAmountReverse,
+           result: results.itemPriceSellerReceives,
+           discountAmount: results.discountAmountReverse ?? 0,
+           finalPrice: results.finalCustomerPriceReverse ?? 0,
+           currencySymbol: currencySymbol,
+         });
+       }
+     }
   }, [
     sellingPriceBeforeDiscountInput,
     discountPercentage,
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculatePayoutLogic, // Include dependency
+    calculatePayoutLogic,
   ]);
 
 
@@ -364,11 +381,11 @@ export default function FeeCalculator() {
   };
 
   const displayFeePercentage = (feePercentage * 100).toFixed(1);
-  const displayDiscountPercentage = (discountPercentage * 100).toFixed(1); // Discount percentage for display
+  const displayDiscountPercentage = (discountPercentage * 100).toFixed(1);
 
 
   return (
-    <TooltipProvider> {/* Wrap with TooltipProvider */}
+    <TooltipProvider>
       <Card className="w-full shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Uber Eats Price Calculator</CardTitle>
@@ -395,55 +412,78 @@ export default function FeeCalculator() {
 
               {/* Selling Price Calculator Tab */}
               <TabsContent value="selling-price" className="mt-6 space-y-6">
-                 {/* Desired Item Price Input */}
-                <div className="space-y-2">
-                  <Label htmlFor="item-price-input" className="flex items-center gap-2">
-                    <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                    Desired Payout (Seller Receives)
-                  </Label>
-                  <Input
-                    id="item-price-input"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder={`e.g., 700.00`}
-                    value={itemPriceInput}
-                    onChange={handleItemPriceInputChange}
-                    className="bg-secondary focus:ring-accent text-base"
-                    aria-label="Desired Payout (Seller Receives)"
-                  />
-                   <p className="text-xs text-muted-foreground">
-                     The amount you want after the Uber fee is deducted.
-                   </p>
-                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                    {/* Desired Payout Input (Takes 2 columns) */}
+                    <div className="space-y-2 sm:col-span-2">
+                       <Label htmlFor="item-price-input" className="flex items-center gap-2">
+                          <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                          Desired Payout (Seller Receives)
+                       </Label>
+                       <Input
+                          id="item-price-input"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder={`e.g., 700.00`}
+                          value={itemPriceInput}
+                          onChange={handleItemPriceInputChange}
+                          className="bg-secondary focus:ring-accent text-base"
+                          aria-label="Desired Payout (Seller Receives)"
+                       />
+                       <p className="text-xs text-muted-foreground">
+                         The amount you want after the Uber fee is deducted.
+                       </p>
+                    </div>
 
-                {/* Discount Input Section for 'selling-price' */}
-                <div className="space-y-2">
-                   <Label htmlFor="discount-input-selling-price" className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                      Optional Discount Percentage
-                      <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
+                    {/* Offer Dropdown (Takes 1 column) */}
+                    <div className="space-y-2">
+                       <Label htmlFor="discount-select-selling-price" className="flex items-center gap-2">
+                         <Tag className="h-4 w-4 text-muted-foreground" />
+                         Offer (%)
+                         <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                             <p className="text-xs">Enter the discount percentage (0-100) offered to the customer. This is applied to the 'Selling Price (Before Discount)'.</p>
-                          </TooltipContent>
-                       </Tooltip>
-                   </Label>
-                   <Input
-                      id="discount-input-selling-price"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="e.g., 10 or 15.5 (0-100)"
-                      value={discountInput}
-                      onChange={handleDiscountInputChange}
-                      className="bg-secondary focus:ring-accent text-base"
-                      aria-label="Optional Discount Percentage"
-                   />
-                   <p className="text-xs text-muted-foreground">
-                      Leave blank or 0 if no discount is applied. Current: {displayDiscountPercentage}%
-                   </p>
-                </div>
+                           </TooltipTrigger>
+                           <TooltipContent side="top" className="max-w-xs">
+                             <p className="text-xs">Select or enter the discount percentage (0-100) offered to the customer. Applied to 'Selling Price (Before Discount)'.</p>
+                           </TooltipContent>
+                         </Tooltip>
+                       </Label>
+                       <Select value={selectedDiscountOption} onValueChange={handleDiscountOptionChange}>
+                          <SelectTrigger id="discount-select-selling-price" className="bg-secondary focus:ring-accent text-base w-full">
+                             <SelectValue placeholder="Select offer..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                             <SelectItem value="0">0% (No Offer)</SelectItem>
+                             <SelectItem value="20">20%</SelectItem>
+                             <SelectItem value="30">30%</SelectItem>
+                             <SelectItem value="40">40%</SelectItem>
+                             <SelectItem value="50">50%</SelectItem>
+                             <SelectItem value="75">75%</SelectItem>
+                             <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                       </Select>
+                    </div>
+                 </div>
+
+                  {/* Custom Discount Input - Conditionally Rendered */}
+                 {selectedDiscountOption === 'custom' && (
+                    <div className="space-y-2">
+                       <Label htmlFor="custom-discount-input-selling-price" className="flex items-center gap-2">
+                          <Percent className="h-4 w-4 text-muted-foreground" />
+                          Custom Offer Percentage
+                       </Label>
+                       <Input
+                          id="custom-discount-input-selling-price"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="e.g., 15.5 (0-100)"
+                          value={customDiscountInput}
+                          onChange={handleCustomDiscountInputChange}
+                          className="bg-secondary focus:ring-accent text-base"
+                          aria-label="Custom Offer Percentage"
+                       />
+                    </div>
+                 )}
 
                 {/* Calculate Button */}
                  <Button onClick={handleCalculateSellingPrice} className="w-full">
@@ -529,55 +569,78 @@ export default function FeeCalculator() {
 
               {/* Payout Calculator Tab */}
               <TabsContent value="payout" className="mt-6 space-y-6">
-                 {/* Selling Price Before Discount Input */}
-                <div className="space-y-2">
-                  <Label htmlFor="selling-price-before-discount-input" className="flex items-center gap-2">
-                     <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                     Selling Price (Before Discount)
-                  </Label>
-                  <Input
-                    id="selling-price-before-discount-input"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder={`e.g., 1000.00`}
-                    value={sellingPriceBeforeDiscountInput}
-                    onChange={handleSellingPriceBeforeDiscountInputChange}
-                    className="bg-secondary focus:ring-accent text-base"
-                    aria-label="Selling Price (Before Discount)"
-                  />
-                   <p className="text-xs text-muted-foreground">
-                     Enter the price listed on the platform *before* any discount is applied.
-                   </p>
-                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+                     {/* Selling Price Before Discount Input (Takes 2 columns) */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label htmlFor="selling-price-before-discount-input" className="flex items-center gap-2">
+                         <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                         Selling Price (Before Discount)
+                      </Label>
+                      <Input
+                        id="selling-price-before-discount-input"
+                        type="text"
+                        inputMode="decimal"
+                        placeholder={`e.g., 1000.00`}
+                        value={sellingPriceBeforeDiscountInput}
+                        onChange={handleSellingPriceBeforeDiscountInputChange}
+                        className="bg-secondary focus:ring-accent text-base"
+                        aria-label="Selling Price (Before Discount)"
+                      />
+                       <p className="text-xs text-muted-foreground">
+                         Enter the price listed on the platform *before* any discount is applied.
+                       </p>
+                    </div>
 
-                {/* Discount Input Section for 'payout' */}
-                <div className="space-y-2">
-                   <Label htmlFor="discount-input-payout" className="flex items-center gap-2">
-                      <Tag className="h-4 w-4 text-muted-foreground" />
-                      Optional Discount Percentage
-                       <Tooltip delayDuration={100}>
-                          <TooltipTrigger asChild>
-                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs">
-                             <p className="text-xs">Enter the discount percentage (0-100) offered to the customer from the 'Selling Price (Before Discount)'.</p>
-                          </TooltipContent>
-                       </Tooltip>
-                   </Label>
-                   <Input
-                      id="discount-input-payout"
-                      type="text"
-                      inputMode="decimal"
-                      placeholder="e.g., 10 or 15.5 (0-100)"
-                      value={discountInput}
-                      onChange={handleDiscountInputChange}
-                      className="bg-secondary focus:ring-accent text-base"
-                      aria-label="Optional Discount Percentage"
-                   />
-                   <p className="text-xs text-muted-foreground">
-                      Leave blank or 0 if no discount was applied. Current: {displayDiscountPercentage}%
-                   </p>
-                </div>
+                    {/* Offer Dropdown (Takes 1 column) */}
+                    <div className="space-y-2">
+                       <Label htmlFor="discount-select-payout" className="flex items-center gap-2">
+                          <Tag className="h-4 w-4 text-muted-foreground" />
+                          Offer (%)
+                          <Tooltip delayDuration={100}>
+                              <TooltipTrigger asChild>
+                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                 <p className="text-xs">Select or enter the discount percentage (0-100) offered from the 'Selling Price (Before Discount)'.</p>
+                              </TooltipContent>
+                          </Tooltip>
+                       </Label>
+                       <Select value={selectedDiscountOption} onValueChange={handleDiscountOptionChange}>
+                          <SelectTrigger id="discount-select-payout" className="bg-secondary focus:ring-accent text-base w-full">
+                             <SelectValue placeholder="Select offer..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="0">0% (No Offer)</SelectItem>
+                             <SelectItem value="20">20%</SelectItem>
+                             <SelectItem value="30">30%</SelectItem>
+                             <SelectItem value="40">40%</SelectItem>
+                             <SelectItem value="50">50%</SelectItem>
+                             <SelectItem value="75">75%</SelectItem>
+                             <SelectItem value="custom">Custom</SelectItem>
+                          </SelectContent>
+                       </Select>
+                    </div>
+                 </div>
+
+                 {/* Custom Discount Input - Conditionally Rendered */}
+                 {selectedDiscountOption === 'custom' && (
+                    <div className="space-y-2">
+                       <Label htmlFor="custom-discount-input-payout" className="flex items-center gap-2">
+                          <Percent className="h-4 w-4 text-muted-foreground" />
+                          Custom Offer Percentage
+                       </Label>
+                       <Input
+                          id="custom-discount-input-payout"
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="e.g., 15.5 (0-100)"
+                          value={customDiscountInput}
+                          onChange={handleCustomDiscountInputChange}
+                          className="bg-secondary focus:ring-accent text-base"
+                          aria-label="Custom Offer Percentage"
+                       />
+                    </div>
+                 )}
 
                 {/* Calculate Button */}
                  <Button onClick={handleCalculatePayout} className="w-full">
@@ -596,7 +659,7 @@ export default function FeeCalculator() {
                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                              </TooltipTrigger>
                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">Calculated as: Selling Price (Before Discount) * (1 - Discount %).</p>
+                                <p className="text-xs">Calculated as: Selling Price (Before Discount) * (1 - Offer %).</p>
                              </TooltipContent>
                           </Tooltip>
                        </Label>

@@ -3,12 +3,12 @@
 
 # Uber Eats Fee Calculator - Built with Gemini AI (via Firebase Studio)
 
-This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage and an optional discount percentage. It allows users to calculate the final selling price needed based on a desired item price or determine the original item price by subtracting the fee and considering the discount from a given selling price.
+This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage and an optional offer/discount percentage. It allows users to calculate the final selling price needed based on a desired item price or determine the original item price by subtracting the fee and considering the discount from a given selling price.
 
 ## Features
 
-*   **Calculate Selling Price (Based on Desired Price + Fee + Optional Discount):** Enter the **Desired Item Price** you want to receive *before* the fee is added and before any discount. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Price / (1 - Fee Percentage)`. Optionally, enter a **Discount Percentage**, and it calculates the **Final Price (Customer Pays)** as `Selling Price * (1 - Discount Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price * Fee Percentage`) and the **Discount Amount**.
-*   **Calculate Item Price (Selling Price - Discount - Fee):** Enter a **Selling Price (Before Discount)** (the price listed on the platform *before* any discount). Optionally, enter the **Discount Percentage** (0-100) offered to the customer. The calculator first calculates the **Discount Given** (`Selling Price (Before Discount) * Discount Percentage`) and the **Final Price (Customer Pays)** (`Selling Price (Before Discount) * (1 - Discount Percentage)`). Then, it calculates the **Uber Fee** based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`). Finally, it determines the **Item Price (Seller Receives)** (`Final Price - Uber Fee`).
+*   **Calculate Selling Price (Based on Desired Price + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`) and the **Discount Amount**.
+*   **Calculate Payout (Selling Price - Offer - Fee):** Enter a **Selling Price (Before Discount)** (the price listed on the platform *before* any offer/discount). Optionally, select the **Offer Percentage** (0-100) offered to the customer. The calculator first calculates the **Discount Given** (`Selling Price (Before Discount) * Offer Percentage`) and the **Final Price (Customer Pays)** (`Selling Price (Before Discount) * (1 - Offer Percentage)`). Then, it calculates the **Uber Fee** based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`). Finally, it determines the **Payout (Seller Receives)** (`Final Price - Uber Fee`).
 *   **Configurable Settings:**
     *   Set the fee percentage (defaults to 30%).
     *   Set the currency symbol (defaults to 'Rs.').
@@ -65,33 +65,35 @@ This will start the development server, usually on `http://localhost:9002`. The 
 
 1.  **Open the App:** Navigate to the running application in your browser.
 2.  **Calculator:**
-    *   **Item Price + Fee Tab:**
-        *   Enter the **Desired Item Price** (the amount you want to receive *before* fees and discounts).
-        *   (Optional) Enter the **Discount Percentage** (0-100) offered to the customer.
+    *   **Selling Price Calculator Tab:**
+        *   Enter the **Desired Payout** (the amount you want to receive *after* fees).
+        *   (Optional) Select an **Offer Percentage** from the dropdown (0%, 20%, 30%, 40%, 50%, 75%) or choose "Custom" and enter a percentage (0-100).
+        *   Click **Calculate Selling Price**.
         *   The calculator shows:
-            *   **Selling Price (Before Discount):** The price needed before discount (`Desired Price / (1 - Fee Percentage)`).
+            *   **Selling Price (Before Discount):** The price needed before the offer (`Desired Payout / (1 - Fee Percentage)`).
             *   **Uber Fee:** Calculated on the Selling Price Before Discount.
-            *   **Discount Amount:** The value of the discount applied.
-            *   **Final Price (Customer Pays):** The price after the discount.
-        *   *Example (No Discount):* Desired Price `Rs. 700`, Fee `30%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Final Price `Rs. 1000`.
-        *   *Example (With Discount):* Desired Price `Rs. 700`, Fee `30%`, Discount `10%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Discount `Rs. 100`, Final Price `Rs. 900`.
-    *   **Selling Price - Fee Tab:**
-        *   Enter the **Selling Price (Before Discount)** (the price listed *before* any discount).
-        *   (Optional) Enter the **Discount Percentage** (0-100) offered to the customer from this price.
+            *   **Discount Amount:** The value of the offer applied.
+            *   **Final Price (Customer Pays):** The price after the offer.
+        *   *Example (No Offer):* Desired Payout `Rs. 700`, Fee `30%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Final Price `Rs. 1000`.
+        *   *Example (With Offer):* Desired Payout `Rs. 700`, Fee `30%`, Offer `10%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Discount `Rs. 100`, Final Price `Rs. 900`.
+    *   **Payout Calculator Tab:**
+        *   Enter the **Selling Price (Before Discount)** (the price listed *before* any offer).
+        *   (Optional) Select an **Offer Percentage** from the dropdown (0-100) or choose "Custom" and enter a percentage.
+        *   Click **Calculate Payout**.
         *   The calculator shows:
-            *   **Final Price (Customer Pays):** `Selling Price (Before Discount) * (1 - Discount Percentage)`.
-            *   **Discount Given:** The value of the discount applied.
+            *   **Final Price (Customer Pays):** `Selling Price (Before Discount) * (1 - Offer Percentage)`.
+            *   **Discount Given:** The value of the offer applied.
             *   **Uber Fee:** Calculated based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`).
-            *   **Item Price (Seller Receives):** The amount the seller gets after the discount and fee (`Final Price - Uber Fee`).
-        *   *Example (No Discount):* Selling Price Before Discount `Rs. 1000`, Fee `30%`. Result: Customer Pays `Rs. 1000`, Discount `Rs. 0`, Fee `Rs. 300`, Seller Receives `Rs. 700`.
-        *   *Example (With Discount):* Selling Price Before Discount `Rs. 1000`, Fee `30%`, Discount `10%`. Result: Customer Pays `Rs. 900`, Discount `Rs. 100`, Fee `Rs. 270` (30% of 900), Seller Receives `Rs. 630` (900 - 270).
+            *   **Payout (Seller Receives):** The amount the seller gets after the offer and fee (`Final Price - Uber Fee`).
+        *   *Example (No Offer):* Selling Price Before Discount `Rs. 1000`, Fee `30%`. Result: Customer Pays `Rs. 1000`, Discount `Rs. 0`, Fee `Rs. 300`, Seller Receives `Rs. 700`.
+        *   *Example (With Offer):* Selling Price Before Discount `Rs. 1000`, Fee `30%`, Offer `10%`. Result: Customer Pays `Rs. 900`, Discount `Rs. 100`, Fee `Rs. 270` (30% of 900), Seller Receives `Rs. 630` (900 - 270).
 3.  **Settings:**
     *   Click the gear icon (⚙️) in the top-right corner to open the Settings modal.
     *   Adjust the "Uber Fee Percentage" and "Currency Symbol".
     *   Click "Save Changes". Settings are saved in `localStorage`.
 4.  **History:**
     *   Expand the "View Calculation History" accordion below the calculator.
-    *   Your recent calculations will be displayed in a table, including discount details.
+    *   Your recent calculations will be displayed in a table, including offer details.
     *   Click the "Clear" button within the history section to remove all saved history entries from `localStorage`.
 
 ## LocalStorage Details
@@ -101,17 +103,17 @@ The application uses the browser's `localStorage` to store data persistently on 
 *   **Settings Key:** `uberFeeCalculatorSettings`
     *   **Format:** JSON string representing an object like `{"feePercentage": 0.3, "currencySymbol": "Rs."}`.
 *   **History Key:** `uberFeeCalculatorHistory`
-    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`with-fee` or `without-fee`), `input` value, `feePercentage`, `discountPercentage`, calculated `fee`, `discountAmount`, `result`, `finalPrice`, and `currencySymbol`. See `src/types/history.ts` for detailed field descriptions.
+    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`selling-price` or `payout`), `input` value, `feePercentage`, `discountPercentage` (the offer %), calculated `fee`, `discountAmount`, `result`, `finalPrice`, and `currencySymbol`. See `src/types/history.ts` for detailed field descriptions.
 
 ```json
 [
   {
     "id": "unique_id_1",
     "timestamp": 1678886400000,
-    "type": "with-fee", // Desired Price -> Final Price
-    "input": 700, // Desired Item Price (X)
+    "type": "selling-price", // Desired Payout -> Final Price
+    "input": 700, // Desired Payout (X)
     "feePercentage": 0.30,
-    "discountPercentage": 0.10, // 10% Discount
+    "discountPercentage": 0.10, // 10% Offer
     "fee": 300, // Fee = (700 / (1 - 0.30)) * 0.30
     "discountAmount": 100, // Discount = (700 / (1 - 0.30)) * 0.10
     "result": 1000, // Selling Price Before Discount = 700 / (1 - 0.30)
@@ -121,13 +123,13 @@ The application uses the browser's `localStorage` to store data persistently on 
   {
     "id": "unique_id_2",
     "timestamp": 1678896400000,
-    "type": "without-fee", // SP (Before Disc) -> Seller Receives
+    "type": "payout", // SP (Before Disc) -> Payout
     "input": 1000, // Selling Price Before Discount
     "feePercentage": 0.30,
-    "discountPercentage": 0.10, // 10% Discount was applied
+    "discountPercentage": 0.10, // 10% Offer was applied
     "fee": 270, // Fee = (1000 * (1 - 0.10)) * 0.30 = 900 * 0.30
     "discountAmount": 100, // Discount = 1000 * 0.10
-    "result": 630, // Seller Receives = (1000 * (1 - 0.10)) - 270 = 900 - 270
+    "result": 630, // Payout = (1000 * (1 - 0.10)) - 270 = 900 - 270
     "finalPrice": 900, // Customer Pays = 1000 * (1 - 0.10)
     "currencySymbol": "Rs."
   }

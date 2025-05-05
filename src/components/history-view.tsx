@@ -186,7 +186,7 @@ export default function HistoryView() {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Disc (%)</TableHead>
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Offer (%)</TableHead> {/* Changed label */}
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Discount</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
@@ -253,3 +253,4 @@ export default function HistoryView() {
     </TooltipProvider>
   );
 }
+
