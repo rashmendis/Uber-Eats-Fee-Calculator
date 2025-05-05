@@ -175,8 +175,9 @@ export default function HistoryView() {
                 <TableHeader className="sticky top-0 z-10 bg-card border-b">
                   <TableRow className="hover:bg-transparent"> {/* Remove hover */}
                      {/* Add border-r for vertical lines */}
-                     <TableHead className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Timestamp</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
+                     {/* Reduced padding in TableHead via ui/table.tsx */}
+                     <TableHead className="whitespace-nowrap border-r">Timestamp</TableHead>
+                     <TableHead className="text-right whitespace-nowrap border-r">
                         Input
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
@@ -187,9 +188,9 @@ export default function HistoryView() {
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Offer / Discount</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
+                     <TableHead className="text-right whitespace-nowrap border-r">Fee</TableHead>
+                     <TableHead className="text-right whitespace-nowrap border-r">Offer / Discount</TableHead>
+                     <TableHead className="text-right whitespace-nowrap border-r">
                         Result
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
@@ -200,7 +201,7 @@ export default function HistoryView() {
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap"> {/* No border-r */}
+                     <TableHead className="text-right whitespace-nowrap"> {/* No border-r */}
                         Customer Price
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
@@ -217,26 +218,27 @@ export default function HistoryView() {
                   {history.map((entry) => (
                     <TableRow key={entry.id} className="border-b last:border-b-0"> {/* Ensure border-b */}
                       {/* Consistent padding and border */}
-                      <TableCell className="text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 truncate border-r">
+                      {/* Reduced padding in TableCell via ui/table.tsx */}
+                      <TableCell className="text-xs text-muted-foreground truncate border-r">
                         {format(new Date(entry.timestamp), 'PPp')}
                       </TableCell>
-                      <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                      <TableCell className="text-right text-xs sm:text-sm border-r">
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                           {formatCurrency(entry.input, entry.currencySymbol)}
                       </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                       <TableCell className="text-right text-xs sm:text-sm border-r">
                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.feePercentage)}</span>
                          {formatCurrency(entry.fee, entry.currencySymbol)}
                        </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                       <TableCell className="text-right text-xs sm:text-sm border-r">
                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.discountPercentage)}</span>
                          {formatCurrency(entry.discountAmount, entry.currencySymbol)}
                        </TableCell>
-                      <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3 border-r">
+                      <TableCell className="text-right text-xs sm:text-sm font-medium border-r">
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3"> {/* Last column */}
+                       <TableCell className="text-right text-xs sm:text-sm font-medium"> {/* Last column */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel()}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>

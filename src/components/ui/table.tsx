@@ -21,7 +21,9 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{children}</thead>
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{/* Render children directly inside the thead without extra whitespace */}
+    {children}
+  </thead>
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -55,7 +57,7 @@ TableFooter.displayName = "TableFooter"
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...props }, ref) => ( // Explicitly destructure children
+>(({ className, children, ...props }, ref) => (
   <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props}>{children}</tr>
 ));
 TableRow.displayName = "TableRow"
@@ -67,7 +69,8 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-3 py-2 sm:px-4 sm:py-3 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 whitespace-nowrap border-r last:border-r-0", // Added padding, border, whitespace
+      // Reduced padding from px-4 py-3 to px-3 py-2
+      "h-12 px-3 py-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 whitespace-nowrap border-r last:border-r-0",
       className
     )}
     {...props}
@@ -81,7 +84,8 @@ const TableCell = React.forwardRef<
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <td
     ref={ref}
-    className={cn("px-3 py-2 sm:px-4 sm:py-3 align-middle [&:has([role=checkbox])]:pr-0 border-r last:border-r-0", className)} // Added padding and border
+    // Reduced padding from px-4 py-3 to px-3 py-2
+    className={cn("px-3 py-2 align-middle [&:has([role=checkbox])]:pr-0 border-r last:border-r-0", className)}
     {...props}
   >{children}</td>
 ))
