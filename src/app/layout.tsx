@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'Uber Eats Fee Calculator', // Update title
-  description: 'Calculate Uber Eats prices with and without the 30% fee.', // Update description
+  description: 'Calculate Uber Eats prices with and without the configured fee percentage.', // Update description
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
         <Toaster /> {/* Add Toaster here */}
