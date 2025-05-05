@@ -89,6 +89,7 @@ export default function FeeCalculator() {
     customerPriceAfterDiscount: number | null | typeof Infinity;
     discountAmountForward: number | null;
     feeAmountForward: number | null | typeof Infinity;
+    actualPayout: number | null; // Added for clarity
   } | null>(null);
 
   const [calculatedResultsPayout, setCalculatedResultsPayout] = useState<{
@@ -202,20 +203,20 @@ export default function FeeCalculator() {
 
   // Calculation logic for 'Selling Price Calculator' tab
   // Input: Desired Payout (X), Discount %, Fee %
-  // Output: Selling Price (Before Discount), Customer Price (After Discount), Discount Amount, Fee Amount
+  // Output: Selling Price (Before Discount), Customer Price (After Discount), Discount Amount, Fee Amount, Actual Payout (== Desired Payout)
   const calculateSellingPriceLogic = useCallback((priceInput: string, discount: number, fee: number) => {
-      const desiredPrice = parseFloat(priceInput); // X
-      if (isNaN(desiredPrice) || desiredPrice < 0) {
-         return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null };
+      const desiredPayout = parseFloat(priceInput); // X
+      if (isNaN(desiredPayout) || desiredPayout < 0) {
+         return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null, actualPayout: null };
       }
       if (fee >= 1) {
           // Handle 100% fee case to avoid division by zero
-          return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmountForward: 0, feeAmountForward: Infinity };
+          return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmountForward: 0, feeAmountForward: Infinity, actualPayout: desiredPayout };
       }
 
       // Calculate Selling Price (Before Discount) based on Desired Payout and Fee
       // SP_Before_Discount * (1 - Fee) = Desired_Payout
-      const spBeforeDiscount = desiredPrice / (1 - fee);
+      const spBeforeDiscount = desiredPayout / (1 - fee);
 
       // Calculate Customer Price (After Discount)
       const spAfterDiscount = spBeforeDiscount * (1 - discount); // Customer pays this
@@ -230,11 +231,15 @@ export default function FeeCalculator() {
       const finalSpAfterDiscount = Math.max(0, spAfterDiscount);
       const finalDiscountAmt = Math.max(0, discountAmt); // Ensure discount isn't negative
 
+      // The 'actual payout' here is just the input 'desired payout'
+      const actualPayoutResult = desiredPayout;
+
       return {
         sellingPriceBeforeDiscount: spBeforeDiscount,
         customerPriceAfterDiscount: finalSpAfterDiscount,
         discountAmountForward: finalDiscountAmt,
-        feeAmountForward: feeAmt
+        feeAmountForward: feeAmt,
+        actualPayout: actualPayoutResult
       };
   }, []);
 
@@ -355,7 +360,7 @@ export default function FeeCalculator() {
       if (!isNaN(price) && price >= 0) {
         addHistoryEntry({
           type: 'selling-price',
-          input: price,
+          input: price, // This is the Desired Payout
           feePercentage: feePercentage,
           discountPercentage: discountPercentage,
           fee: results.feeAmountForward,
@@ -594,8 +599,8 @@ export default function FeeCalculator() {
 
                     {/* Calculated Fee */}
                     <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm">
-                          <Percent className="h-4 w-4 text-muted-foreground" />
+                       <Label className="flex items-center gap-2 font-medium text-sm text-destructive">
+                          <Percent className="h-4 w-4" />
                           Uber Fee ({displayFeePercentage}%)
                            <Tooltip delayDuration={100}>
                              <TooltipTrigger asChild>
@@ -606,23 +611,43 @@ export default function FeeCalculator() {
                              </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsSellingPrice?.feeAmountForward ?? null)}
+                       <span className={cn("font-semibold text-sm text-destructive", calculatedResultsSellingPrice?.feeAmountForward !== null ? "" : "text-muted-foreground")}>
+                         - {formatCurrency(calculatedResultsSellingPrice?.feeAmountForward ?? null)}
                        </span>
                      </div>
 
                      {/* Discount Amount */}
                      {discountPercentage > 0 && (
                         <div className="flex justify-between items-center">
-                          <Label className="flex items-center gap-2 font-medium text-sm text-green-600 dark:text-green-400">
+                          <Label className="flex items-center gap-2 font-medium text-sm text-destructive">
                             <Tag className="h-4 w-4" />
                              Discount Amount ({displayDiscountPercentage}%)
                           </Label>
-                          <span className="font-semibold text-sm text-green-600 dark:text-green-400">
+                          <span className="font-semibold text-sm text-destructive">
                             - {formatCurrency(calculatedResultsSellingPrice?.discountAmountForward ?? null)}
                           </span>
                         </div>
                      )}
+
+                      {/* Actual Payout (Seller Receives) - Added */}
+                     <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                         <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
+                         Actual Payout (Seller Receives)
+                          <Tooltip delayDuration={100}>
+                             <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                             </TooltipTrigger>
+                             <TooltipContent side="top" className="max-w-xs">
+                                <p className="text-xs">This is the Desired Payout you entered initially.</p>
+                             </TooltipContent>
+                          </Tooltip>
+                       </Label>
+                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.actualPayout !== null ? "text-muted-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(calculatedResultsSellingPrice?.actualPayout ?? null)}
+                       </span>
+                     </div>
+
 
                      {/* Separator */}
                      <div className="border-t border-border my-2"></div>
@@ -813,3 +838,5 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
+
+    

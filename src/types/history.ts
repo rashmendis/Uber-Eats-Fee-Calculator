@@ -38,8 +38,7 @@ export interface HistoryEntry {
   result: number;
   /**
    * The final price the customer pays.
-   * If type is 'selling-price', this is SP Before Discount * (1 - Discount%).
-   * If type is 'payout', this is SP Before Discount * (1 - Discount%).
+   * Calculated as: Selling Price Before Discount * (1 - Discount %).
    */
   finalPrice: number;
   currencySymbol: string;

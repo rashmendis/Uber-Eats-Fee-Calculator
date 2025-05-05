@@ -7,7 +7,7 @@ This is a simple Next.js application designed to calculate Uber Eats prices, fac
 
 ## Features
 
-*   **Calculate Selling Price (Based on Desired Payout + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`) and the **Discount Amount**.
+*   **Calculate Selling Price (Based on Desired Payout + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`), the **Discount Amount**, and the **Actual Payout** (which matches the input Desired Payout).
 *   **Calculate Payout (Selling Price - Offer - Fee):** Enter a **Selling Price (Before Discount)** (the price listed on the platform *before* any offer/discount). Optionally, select the **Offer Percentage** (0-100) offered to the customer. The calculator first calculates the **Discount Given** (`Selling Price (Before Discount) * Offer Percentage`) and the **Final Price (Customer Pays)** (`Selling Price (Before Discount) * (1 - Offer Percentage)`). Then, it calculates the **Uber Fee** based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`). Finally, it determines the **Payout (Seller Receives)** (`Final Price - Uber Fee`).
 *   **Configurable Settings:**
     *   Set the fee percentage (defaults to 30%).
@@ -73,9 +73,10 @@ This will start the development server, usually on `http://localhost:9002`. The 
             *   **Selling Price (Before Discount):** The price needed before the offer (`Desired Payout / (1 - Fee Percentage)`).
             *   **Uber Fee:** Calculated on the Selling Price Before Discount.
             *   **Discount Amount:** The value of the offer applied.
+            *   **Actual Payout:** Matches the Desired Payout input.
             *   **Final Price (Customer Pays):** The price after the offer.
-        *   *Example (No Offer):* Desired Payout `Rs. 700`, Fee `30%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Final Price `Rs. 1000`.
-        *   *Example (With Offer):* Desired Payout `Rs. 700`, Fee `30%`, Offer `10%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Discount `Rs. 100`, Final Price `Rs. 900`.
+        *   *Example (No Offer):* Desired Payout `Rs. 700`, Fee `30%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Actual Payout `Rs. 700`, Final Price `Rs. 1000`.
+        *   *Example (With Offer):* Desired Payout `Rs. 700`, Fee `30%`, Offer `10%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Discount `Rs. 100`, Actual Payout `Rs. 700`, Final Price `Rs. 900`.
     *   **Payout Calculator Tab:**
         *   Enter the **Selling Price (Before Discount)** (the price listed *before* any offer).
         *   (Optional) Select an **Offer Percentage** from the dropdown (0-100) or choose "Custom" and enter a percentage.
