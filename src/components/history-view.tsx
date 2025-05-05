@@ -47,18 +47,23 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
           ).map(entry => {
              // Ensure finalPrice exists and makes sense based on type and discount
             let defaultFinalPrice = 0;
-            // Final Price (Customer Pays) is always SP Before Discount * (1 - Discount%)
-            // For 'selling-price' type, result is SP Before Discount
-            // For 'payout' type, input is SP Before Discount (though payout history isn't saved currently)
-            const spBeforeDiscount = entry.type === 'selling-price' ? entry.result : entry.input;
             const discountPercentage = typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0; // Ensure discount exists
 
-            if (typeof spBeforeDiscount === 'number') {
-              defaultFinalPrice = spBeforeDiscount * (1 - discountPercentage);
-            } else {
-               // Fallback if data is somehow inconsistent
-               defaultFinalPrice = entry.result; // Less ideal fallback
-            }
+             // Calculate defaultFinalPrice based on type
+             if (entry.type === 'selling-price') {
+                 // For 'selling-price', result is SP Before Discount
+                 const spBeforeDiscount = entry.result;
+                 if (typeof spBeforeDiscount === 'number') {
+                     defaultFinalPrice = spBeforeDiscount * (1 - discountPercentage);
+                 } else {
+                     defaultFinalPrice = entry.result; // Fallback
+                 }
+             } else if (entry.type === 'payout') {
+                 // For 'payout', finalPrice should represent Subtotal Customer Pays
+                 // If finalPrice is missing, we can't easily reconstruct it from other saved fields (input is sum of SPs, result is total payout)
+                 // So we use 0 as a fallback if finalPrice is invalid/missing for payout entries
+                 defaultFinalPrice = 0; // Less ideal, but avoids complex reconstruction
+             }
 
 
              return {
@@ -68,6 +73,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                 discountPercentage: discountPercentage,
                 discountAmount: typeof entry.discountAmount === 'number' ? entry.discountAmount : 0,
                 // Use calculated defaultFinalPrice if finalPrice is missing or invalid
+                // For payout, if finalPrice is invalid, defaultFinalPrice is 0
                 finalPrice: typeof entry.finalPrice === 'number' && isFinite(entry.finalPrice) ? entry.finalPrice : defaultFinalPrice
              }
           });
@@ -148,18 +154,20 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
 
   // Determine label based on calculation type - Updated labels
   const getInputLabel = (type: HistoryEntry['type']) => {
-      // For 'selling-price' type, input is 'Desired Payout'
-      // For 'payout' type (not currently saved), input would be item details
-      return type === 'selling-price' ? 'Desired Payout' : 'Input';
+      return type === 'selling-price' ? 'Desired Payout' : 'Sum of SPs';
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
-      // For 'selling-price' type, result is 'SP (Before Disc)'
-      // For 'payout' type, result would be 'Total Payout'
-      return type === 'selling-price' ? 'SP (Before Disc)' : 'Result';
+      return type === 'selling-price' ? 'SP (Before Disc)' : 'Total Payout';
   };
-  const getFinalPriceLabel = () => { // Final Price always means Customer Price now
-      return 'Customer Price';
+  const getFinalPriceLabel = (type: HistoryEntry['type']) => {
+      return type === 'selling-price' ? 'Customer Price' : 'Subtotal Paid';
   };
+  const getFeeLabel = (type: HistoryEntry['type']) => {
+      return type === 'selling-price' ? 'Fee' : 'Total Fee';
+  };
+   const getDiscountLabel = (type: HistoryEntry['type']) => {
+       return type === 'selling-price' ? 'Offer / Discount' : 'Total Discount';
+   };
 
 
   return (
@@ -208,12 +216,32 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                              <p className="text-xs">Selling Price Calc: Desired Payout<br/>Payout Calc: SP (Before Disc)</p>
+                              <p className="text-xs">SP Calc: Desired Payout<br/>Payout Calc: Sum of SPs (Before Disc)</p>
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right whitespace-nowrap border-r">Fee</TableHead>
-                     <TableHead className="text-right whitespace-nowrap border-r">Offer / Discount</TableHead>
+                     <TableHead className="text-right whitespace-nowrap border-r">
+                        {getFeeLabel(filterType === 'all' ? 'selling-price' : filterType)}
+                         <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top">
+                               <p className="text-xs">Fee % and Amount</p>
+                           </TooltipContent>
+                        </Tooltip>
+                     </TableHead>
+                     <TableHead className="text-right whitespace-nowrap border-r">
+                        {getDiscountLabel(filterType === 'all' ? 'selling-price' : filterType)}
+                        <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top">
+                               <p className="text-xs">Discount % and Amount</p>
+                           </TooltipContent>
+                        </Tooltip>
+                     </TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
                         {getResultLabel(filterType === 'all' ? 'selling-price' : filterType)} {/* Dynamic label */}
                         <Tooltip delayDuration={100}>
@@ -221,18 +249,18 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                              <p className="text-xs">Selling Price Calc: SP (Before Disc)<br/>Payout Calc: Payout</p>
+                              <p className="text-xs">SP Calc: SP (Before Disc)<br/>Payout Calc: Total Payout</p>
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap"> {/* No border-r */}
-                        {getFinalPriceLabel()}
+                        {getFinalPriceLabel(filterType === 'all' ? 'selling-price' : filterType)}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                               <p className="text-xs">Always the final price the Customer Pays (after discount).</p>
+                               <p className="text-xs">SP Calc: Customer Price<br/>Payout Calc: Subtotal Paid</p>
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
@@ -263,7 +291,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
                        <TableCell className="text-right text-xs sm:text-sm font-medium whitespace-nowrap"> {/* Last column */}
-                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel()}</span>
+                          <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel(entry.type)}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>
                     </TableRow>

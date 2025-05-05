@@ -34,8 +34,8 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
   // Ensure this code only runs on the client
   if (typeof window === 'undefined') return;
 
-  // Only save 'selling-price' type for now
-  if (entry.type !== 'selling-price') return;
+  // Allow both types now
+  // if (entry.type !== 'selling-price') return;
 
   try {
     const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
@@ -50,18 +50,31 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
     // Avoid adding exact duplicate of the most recent entry based on key properties
     if (currentHistory.length > 0) {
       const lastEntry = currentHistory[0];
-      if (
-        lastEntry.type === newEntry.type &&
-        lastEntry.input === newEntry.input &&
-        lastEntry.result === newEntry.result &&
-        lastEntry.feePercentage === newEntry.feePercentage &&
-        lastEntry.discountPercentage === newEntry.discountPercentage &&
-        lastEntry.finalPrice === newEntry.finalPrice // Also check final price for duplicates
-      ) {
+      let isDuplicate = false;
+      if (lastEntry.type === newEntry.type) {
+        if (newEntry.type === 'selling-price') {
+           isDuplicate = lastEntry.input === newEntry.input &&
+                         lastEntry.result === newEntry.result &&
+                         lastEntry.feePercentage === newEntry.feePercentage &&
+                         lastEntry.discountPercentage === newEntry.discountPercentage &&
+                         lastEntry.finalPrice === newEntry.finalPrice;
+        } else if (newEntry.type === 'payout') {
+           // Compare relevant fields for payout duplication
+           isDuplicate = lastEntry.input === newEntry.input && // Sum of SPs
+                         lastEntry.result === newEntry.result && // Total Payout
+                         lastEntry.feePercentage === newEntry.feePercentage &&
+                         lastEntry.discountAmount === newEntry.discountAmount && // Total Discount Amt
+                         lastEntry.fee === newEntry.fee && // Total Fee Amt
+                         lastEntry.finalPrice === newEntry.finalPrice; // Subtotal Customer Pays
+        }
+      }
+
+      if (isDuplicate) {
         // console.log("Skipping duplicate history entry");
         return; // Don't add exact duplicate
       }
     }
+
 
     const updatedHistory = [newEntry, ...currentHistory].slice(0, MAX_HISTORY_LENGTH);
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
@@ -523,8 +536,6 @@ export default function FeeCalculator() {
           discountAmount: results.discountAmount ?? 0,
           finalPrice: results.customerPriceAfterDiscount, // Customer Pays
           currencySymbol: currencySymbol,
-          // Payout calculations don't have a single 'items' input in the same way
-          // So we might omit or use a different structure if saving payout history
         });
       }
     }
@@ -543,40 +554,54 @@ export default function FeeCalculator() {
      setPayoutCalcResults(results); // Update display state
      setHasCalculatedPayout(true); // Mark that calculation has been done
 
-     // History saving is disabled for multi-item payout calculations for simplicity
-     // You could potentially save a summary or represent the items differently if needed.
+      // Add to history only on explicit calculation and if results are valid numbers
+     if (
+        results.totalPayoutSellerReceives !== null &&
+        results.totalDiscountAmount !== null &&
+        results.totalFeeAmount !== null &&
+        results.subtotalCustomerPrice !== null &&
+        !isLoadingSettings &&
+        isFinite(results.totalPayoutSellerReceives) &&
+        isFinite(results.totalDiscountAmount) &&
+        isFinite(results.totalFeeAmount) &&
+        isFinite(results.subtotalCustomerPrice)
+     ) {
+        // Calculate the sum of selling prices before discount as the 'input' for history
+        const totalSPBeforeDiscount = payoutItems.reduce((sum, item) => {
+             const sp = parseFloat(item.sellingPrice);
+             return sum + (isNaN(sp) ? 0 : sp);
+        }, 0);
 
-     // Example structure if you wanted to save Payout history (not currently implemented)
-     /*
-      if (results.totalPayoutSellerReceives !== null && !isLoadingSettings) {
-         addHistoryEntry({
-            type: 'payout',
-            // Input for payout is complex (list of items) - might need a different structure
-            // For simplicity, maybe save the total SP before discount or just the result?
-            input: payoutItems.reduce((sum, item) => sum + (parseFloat(item.sellingPrice) || 0), 0), // Example: sum of SPs
-            feePercentage: feePercentage,
-            // Discount is per-item, maybe save average or total?
-            discountPercentage: results.totalDiscountAmount !== null && results.subtotalCustomerPrice !== null && results.subtotalCustomerPrice > 0 ? results.totalDiscountAmount / (results.subtotalCustomerPrice + results.totalDiscountAmount) : 0, // Approximate overall discount %
-            fee: results.totalFeeAmount ?? 0,
-            result: results.totalPayoutSellerReceives, // Total Payout
-            discountAmount: results.totalDiscountAmount ?? 0,
-            finalPrice: results.subtotalCustomerPrice ?? 0, // Subtotal Customer Pays
-            currencySymbol: currencySymbol,
-            items: payoutItems.map(p => ({ // Could store item details
-                sellingPrice: parseFloat(p.sellingPrice) || 0,
-                offerPercentage: getPayoutItemDiscountPercentage(p)
-            }))
-         });
-      }
-     */
+         // Check if there's at least one valid item before saving
+        if (payoutItems.some(item => item.sellingPrice !== '' && !isNaN(parseFloat(item.sellingPrice)))) {
+           addHistoryEntry({
+             type: 'payout',
+             input: totalSPBeforeDiscount, // Sum of Selling Prices Before Discount
+             feePercentage: feePercentage,
+             // Overall discount percentage (approximate) - can be complex to define uniquely
+             discountPercentage: results.totalDiscountAmount !== null && results.subtotalCustomerPrice !== null && (results.subtotalCustomerPrice + results.totalDiscountAmount) > 0 ? results.totalDiscountAmount / (results.subtotalCustomerPrice + results.totalDiscountAmount) : 0,
+             fee: results.totalFeeAmount ?? 0, // Total Fee
+             result: results.totalPayoutSellerReceives, // Total Payout Received
+             discountAmount: results.totalDiscountAmount ?? 0, // Total Discount Amount
+             finalPrice: results.subtotalCustomerPrice ?? 0, // Subtotal Customer Pays
+             currencySymbol: currencySymbol,
+             // Optionally include item details if needed, but keep history structure simple for now
+             // items: payoutItems.map(p => ({
+             //     sellingPrice: parseFloat(p.sellingPrice) || 0,
+             //     offerPercentage: getPayoutItemDiscountPercentage(p)
+             // }))
+           });
+        }
+     }
+
 
   }, [
     payoutItems,
     feePercentage,
-    // currencySymbol, // Needed if saving history
+    currencySymbol, // Needed for saving history
     isLoadingSettings,
     calculatePayoutLogic, // Dependency
-    // getPayoutItemDiscountPercentage, // Needed if saving history with item details
+    getPayoutItemDiscountPercentage, // Needed for potential item detail saving (currently commented out)
   ]);
 
   // --- Auto-Recalculation Effect ---
@@ -598,6 +623,7 @@ export default function FeeCalculator() {
        const results = calculatePayoutLogic(payoutItems, feePercentage);
        if (JSON.stringify(results) !== JSON.stringify(payoutCalcResults)) {
            setPayoutCalcResults(results);
+           // DO NOT add to history here automatically
        }
     }
 }, [
@@ -1035,16 +1061,15 @@ export default function FeeCalculator() {
 
                  </div>
                   {/* History Section for Payout */}
-                  {/* History for payout is currently disabled */}
-                 {/*
                  <div className="mt-8">
                     <h3 className="text-lg font-semibold mb-3 text-center">Calculation History</h3>
                     <HistoryView filterType="payout" />
                  </div>
-                 */}
+                 {/*
                   <div className="mt-8 text-center text-muted-foreground">
                     <p>(Payout history is not currently saved)</p>
                  </div>
+                 */}
               </TabsContent>
             </Tabs>
           )}
