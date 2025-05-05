@@ -166,24 +166,22 @@ export default function FeeCalculator() {
     return { calculatedTotal: null, feeAmount: null };
   }, [itemPriceInput, feePercentage, isLoadingSettings]);
 
-  // Calculation for 'Total Price - Fee = Item Price' tab
+  // Calculation for 'Total Price - Fee = Item Price' tab (USER'S REQUESTED FORMULA)
   const { calculatedItemPrice, feeAmount: feeAmountReverse } = useMemo(() => {
     const total = parseFloat(totalPriceInput);
-    if (!isNaN(total) && total >= 0 && !isLoadingSettings && feePercentage < 1) { // Check fee < 100% to avoid division by zero or negative item price logic issue
-        // Correct formula: Item Price = Total Price / (1 + Fee Percentage)
-        const itemPriceResult = total / (1 + feePercentage);
-        const fee = total - itemPriceResult; // Fee = Total Price - Item Price
+    // Use the user's requested formula: Result = Total Price - (Total Price * Fee Percentage)
+    // Fee is calculated as: Fee = Total Price * Fee Percentage
+    if (!isNaN(total) && total >= 0 && !isLoadingSettings) {
+        const fee = total * feePercentage; // Calculate fee based on total price
+        const itemPriceResult = total - fee; // Calculate result by subtracting the fee from total
 
-        // Ensure result is not negative (shouldn't happen with correct formula if total >= 0)
+        // Ensure result is not negative
         if (itemPriceResult >= 0) {
           return { calculatedItemPrice: itemPriceResult, feeAmount: fee };
         } else {
-           // Fallback case, although unlikely with the formula above
-           return { calculatedItemPrice: 0, feeAmount: total }; // If item price calculates negative, assume fee is the whole total
+           // Fallback case if result is negative (unlikely with this formula if total >= 0)
+           return { calculatedItemPrice: 0, feeAmount: total };
         }
-    } else if (!isNaN(total) && total >= 0 && feePercentage === 1) {
-        // Handle 100% fee case specifically
-        return { calculatedItemPrice: 0, feeAmount: total }; // If fee is 100%, original item price must be 0
     }
     return { calculatedItemPrice: null, feeAmount: null };
   }, [totalPriceInput, feePercentage, isLoadingSettings]);
@@ -215,8 +213,8 @@ export default function FeeCalculator() {
            type: 'without-fee',
            input: total, // Input is Total Price
            feePercentage: feePercentage,
-           fee: feeAmountReverse, // Fee calculated from Total Price and Item Price
-           result: calculatedItemPrice, // Result is the calculated Item Price
+           fee: feeAmountReverse, // Fee calculated based on Total Price * Fee Percentage
+           result: calculatedItemPrice, // Result is Total Price - Fee
            currencySymbol: currencySymbol,
          });
        }
