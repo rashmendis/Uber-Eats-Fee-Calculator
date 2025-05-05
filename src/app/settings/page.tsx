@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Settings as SettingsIcon, Percent } from 'lucide-react';
 import Link from 'next/link';
@@ -33,16 +34,19 @@ export default function SettingsPage() {
           setFeePercentageInput((settings.feePercentage * 100).toString());
         } else {
           // Use default if stored data is invalid
+          setCurrentFeePercentage(DEFAULT_FEE_PERCENTAGE); // Also update the state
           setFeePercentageInput((DEFAULT_FEE_PERCENTAGE * 100).toString());
           // Optionally save the default back if invalid data was found
            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify({ feePercentage: DEFAULT_FEE_PERCENTAGE }));
         }
       } else {
         // Use default if no settings found
+        setCurrentFeePercentage(DEFAULT_FEE_PERCENTAGE); // Set default state
         setFeePercentageInput((DEFAULT_FEE_PERCENTAGE * 100).toString());
       }
     } catch (error) {
       console.error("Failed to load settings from localStorage:", error);
+      setCurrentFeePercentage(DEFAULT_FEE_PERCENTAGE); // Set default state on error
       setFeePercentageInput((DEFAULT_FEE_PERCENTAGE * 100).toString());
        // Optionally clear corrupted storage
       // localStorage.removeItem(SETTINGS_STORAGE_KEY);
@@ -88,6 +92,12 @@ export default function SettingsPage() {
         title: "Settings Saved",
         description: `Fee percentage updated to ${percentageValue.toFixed(2)}%.`,
       });
+      // Trigger a storage event to notify other tabs/components (like the calculator)
+      window.dispatchEvent(new StorageEvent('storage', {
+          key: SETTINGS_STORAGE_KEY,
+          newValue: JSON.stringify(newSettings),
+          storageArea: localStorage,
+      }));
     } catch (error) {
       console.error("Failed to save settings to localStorage:", error);
       toast({
@@ -97,6 +107,13 @@ export default function SettingsPage() {
       });
     }
   };
+
+  // Display percentage with appropriate precision
+  const displaySavedPercentage = (currentFeePercentage * 100).toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2, // Show up to 2 decimal places if needed
+    });
+
 
   return (
     <div className="flex min-h-screen flex-col items-center p-4 sm:p-8 md:p-12 lg:p-24 bg-secondary">
@@ -141,7 +158,7 @@ export default function SettingsPage() {
                 aria-label="Fee Percentage"
               />
                <p className="text-xs text-muted-foreground">
-                  Enter the percentage value (e.g., 30 for 30%). Current value: {(currentFeePercentage * 100).toFixed(2)}%
+                  Enter the percentage value (e.g., 30 for 30%). Current: {displaySavedPercentage}%
                </p>
             </div>
           )}
