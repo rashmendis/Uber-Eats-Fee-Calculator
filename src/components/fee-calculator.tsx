@@ -6,11 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Percent, ArrowRight, ArrowLeft, Settings, History } from 'lucide-react'; // Import Settings and History
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
 import type { SettingsData } from '@/types/settings'; // Import SettingsData type
+import SettingsModal from '@/components/settings-modal'; // Import SettingsModal
+import HistoryView from '@/components/history-view'; // Import HistoryView
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+
 
 // Function to add history entry directly to localStorage
 const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
@@ -140,6 +149,7 @@ export default function FeeCalculator() {
 
   const handleItemPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    // Allow empty string, or numbers (including decimals)
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setItemPrice(value);
     }
@@ -147,6 +157,7 @@ export default function FeeCalculator() {
 
   const handleTotalPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+     // Allow empty string, or numbers (including decimals)
      if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setTotalPrice(value);
     }
@@ -173,6 +184,11 @@ export default function FeeCalculator() {
       // This correctly reverses the calculation performed in the 'Price + Fee' tab.
       // Example: If Item Price = 1000, Fee % = 30%, Total Price = 1300.
       //          Then: Original Price = 1300 / (1 + 0.30) = 1300 / 1.30 = 1000.
+      // Fee = Total Price - Original Price = 1300 - 1000 = 300.
+      // ---
+      // Example for Total Price = 900, Fee % = 30%
+      // Original Price = 900 / (1 + 0.30) = 900 / 1.30 ≈ 692.31
+      // Fee = 900 - 692.31 ≈ 207.69
       // ---
        const denominator = 1 + feePercentage;
         if (denominator > 0) { // Avoid division by zero or negative denominator if feePercentage is less than -1
@@ -191,6 +207,7 @@ export default function FeeCalculator() {
   const handleBlurWithFee = useCallback(() => {
     if (calculatedTotal !== null && feeAmountForward !== null && !isLoadingSettings) {
       const price = parseFloat(itemPrice);
+       // Only add to history if the input is a valid positive number
        if (!isNaN(price) && price > 0) {
          addHistoryEntry({
            type: 'with-fee',
@@ -207,6 +224,7 @@ export default function FeeCalculator() {
   const handleBlurWithoutFee = useCallback(() => {
     if (calculatedOriginal !== null && feeAmountReverse !== null && !isLoadingSettings) {
        const total = parseFloat(totalPrice);
+        // Only add to history if the input is a valid positive number
        if (!isNaN(total) && total > 0) {
          addHistoryEntry({
            type: 'without-fee',
@@ -225,6 +243,7 @@ export default function FeeCalculator() {
     if (value === null || value === undefined || value === '') return '-';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
+    // Handle negative zero explicitly if it occurs, though unlikely with current logic
     if (Object.is(numberValue, -0)) {
        return `${currencySymbol} 0.00`;
     }
@@ -261,7 +280,7 @@ export default function FeeCalculator() {
                 <Input
                   id="item-price"
                   type="text"
-                  inputMode="decimal"
+                  inputMode="decimal" // Better mobile keyboard support
                   placeholder={`e.g., 1000.00`}
                   value={itemPrice}
                   onChange={handleItemPriceChange}
@@ -271,10 +290,12 @@ export default function FeeCalculator() {
                 />
               </div>
 
+              {/* Separator/Icon */}
               <div className="flex items-center justify-center text-muted-foreground">
                 <ArrowRight className="h-5 w-5" />
               </div>
 
+              {/* Result Box */}
               <div className="space-y-3 rounded-lg border bg-background p-4">
                  <div className="flex justify-between items-center">
                    <Label className="flex items-center gap-2 font-medium text-sm">
@@ -305,7 +326,7 @@ export default function FeeCalculator() {
                 <Input
                   id="total-price"
                   type="text"
-                  inputMode="decimal"
+                  inputMode="decimal" // Better mobile keyboard support
                    placeholder={`e.g., 1300.00`}
                   value={totalPrice}
                   onChange={handleTotalPriceChange}
@@ -315,10 +336,12 @@ export default function FeeCalculator() {
                 />
               </div>
 
+              {/* Separator/Icon */}
               <div className="flex items-center justify-center text-muted-foreground">
                 <ArrowLeft className="h-5 w-5" />
               </div>
 
+              {/* Result Box */}
                <div className="space-y-3 rounded-lg border bg-background p-4">
                   <div className="flex justify-between items-center">
                     <Label className="flex items-center gap-2 font-medium text-sm">
