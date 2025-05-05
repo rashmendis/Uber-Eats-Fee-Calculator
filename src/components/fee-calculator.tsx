@@ -166,10 +166,14 @@ export default function FeeCalculator() {
     const total = parseFloat(totalPrice);
     // Ensure feePercentage is not -1 to avoid division by zero if original price is calculated as total / (1 + feePercentage)
     if (!isNaN(total) && total > 0 && feePercentage !== -1 && !isLoadingSettings) {
-      // Calculate original price based on total and fee percentage
-      // original + original * feePercentage = total
-      // original * (1 + feePercentage) = total
-      // original = total / (1 + feePercentage)
+      // --- Calculation Logic for 'Price - Fee' ---
+      // This calculation assumes the 'Total Price (With Fee)' was originally calculated by applying
+      // the 'feePercentage' to the 'Original Item Price'.
+      // Formula: Original Price = Total Price / (1 + Fee Percentage)
+      // This correctly reverses the calculation performed in the 'Price + Fee' tab.
+      // Example: If Item Price = 1000, Fee % = 30%, Total Price = 1300.
+      //          Then: Original Price = 1300 / (1 + 0.30) = 1300 / 1.30 = 1000.
+      // ---
        const denominator = 1 + feePercentage;
         if (denominator > 0) { // Avoid division by zero or negative denominator if feePercentage is less than -1
              const original = total / denominator;
