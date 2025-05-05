@@ -21,9 +21,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{/* Render children directly inside the thead without extra whitespace */}
-    {children}
-  </thead>
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{children}</thead> // Remove whitespace
 ))
 TableHeader.displayName = "TableHeader"
 
