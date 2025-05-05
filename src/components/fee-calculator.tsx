@@ -6,19 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, ArrowRight, ArrowLeft, Settings, History, Minus, Equal } from 'lucide-react'; // Import Settings and History, Minus, Equal
+import { Percent, Plus, Equal, Minus } from 'lucide-react'; // Import Plus, Minus, Equal
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
 import type { SettingsData } from '@/types/settings'; // Import SettingsData type
-import SettingsModal from '@/components/settings-modal'; // Import SettingsModal
-import HistoryView from '@/components/history-view'; // Import HistoryView
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 
 
 // Function to add history entry directly to localStorage
@@ -163,7 +155,7 @@ export default function FeeCalculator() {
     }
   };
 
-  // Calculation for 'Item Price + Fee' tab
+  // Calculation for 'Item Price + Fee = Total Price' tab
   const { calculatedTotal, feeAmount: feeAmountForward } = useMemo(() => {
     const price = parseFloat(itemPriceInput);
     if (!isNaN(price) && price >= 0 && !isLoadingSettings) { // Allow 0 price
@@ -246,7 +238,7 @@ export default function FeeCalculator() {
   const displayFeePercentage = (feePercentage * 100).toFixed(1); // Display with one decimal place
 
   return (
-    <Card className="w-full shadow-lg"> {/* Removed max-w-[60%] */}
+    <Card className="w-full shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
         <CardDescription>
@@ -284,8 +276,10 @@ export default function FeeCalculator() {
               </div>
 
               {/* Separator/Icon */}
-              <div className="flex items-center justify-center text-muted-foreground">
-                <ArrowRight className="h-5 w-5" />
+              <div className="flex items-center justify-center text-muted-foreground space-x-2">
+                 <Plus className="h-4 w-4" /> {/* Changed from ArrowRight */}
+                 <span className="text-xs">Fee</span> {/* Added Fee label */}
+                 <Equal className="h-4 w-4" /> {/* Added Equal sign */}
               </div>
 
               {/* Result Box */}
