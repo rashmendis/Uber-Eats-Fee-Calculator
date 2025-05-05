@@ -105,6 +105,15 @@ export default function HistoryView() {
     return `${(value * 100).toFixed(1)}%`;
   };
 
+  // Determine label based on calculation type
+  const getInputLabel = (type: HistoryEntry['type']) => {
+      return type === 'with-fee' ? 'Item Price' : 'Total Price';
+  };
+  const getResultLabel = (type: HistoryEntry['type']) => {
+      return type === 'with-fee' ? 'Total Price' : 'Item Price';
+  };
+
+
   return (
     <div className="w-full"> {/* Removed Card wrapper, as parent Accordion provides structure */}
       <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between"> {/* Use flex-row */}
@@ -132,37 +141,43 @@ export default function HistoryView() {
           </div>
         ) : (
           <ScrollArea className="h-[300px] sm:h-[400px] w-full px-4"> {/* Added horizontal padding here */}
-            <Table className="min-w-full table-fixed sm:table-auto">{/* Ensure table takes full width, use table-fixed for small */}<TableHeader>
+            <Table className="min-w-full table-fixed sm:table-auto">{/* Ensure table takes full width, use table-fixed for small */}
+              <TableHeader>
                 <TableRow>
                    <TableHead className="px-2 py-2 sm:px-4 sm:py-3 w-[140px] sm:w-[160px]">Timestamp</TableHead>
-                   <TableHead className="px-2 py-2 sm:px-4 sm:py-3 w-[80px] sm:w-auto">Type</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[90px] sm:w-auto">Input</TableHead>
                    <TableHead className="text-right px-1 py-2 sm:px-4 sm:py-3 w-[55px] sm:w-auto">Fee(%)</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[80px] sm:w-auto">Fee</TableHead>
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[80px] sm:w-auto">Fee Amt</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 w-[100px] sm:w-auto">Result</TableHead>
                 </TableRow>
-              </TableHeader><TableBody>
+              </TableHeader>
+              <TableBody>
                 {history.map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3 truncate">
                       {format(new Date(entry.timestamp), 'PPp')} {/* Simplified date format */}
                     </TableCell>
-                    <TableCell className="text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
-                      {entry.type === 'with-fee' ? 'Total' : 'Base'} {/* Even shorter labels */}
+                    {/* Input column with dynamic label */}
+                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
+                        <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
+                        {formatCurrency(entry.input, entry.currencySymbol)}
                     </TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.input, entry.currencySymbol)}</TableCell>
                     <TableCell className="text-right text-xs text-muted-foreground px-1 py-2 sm:px-4 sm:py-3">
                       {formatPercentage(entry.feePercentage)}
                     </TableCell>
                     <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm font-medium px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.result, entry.currencySymbol)}</TableCell>
+                    {/* Result column with dynamic label */}
+                    <TableCell className="text-right text-xs sm:text-sm font-medium px-2 py-2 sm:px-4 sm:py-3">
+                        <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
+                        {formatCurrency(entry.result, entry.currencySymbol)}
+                    </TableCell>
                   </TableRow>
                 ))}
-              </TableBody></Table>
+              </TableBody>
+            </Table>
           </ScrollArea>
         )}
       </CardContent>
     </div>
   );
 }
-
