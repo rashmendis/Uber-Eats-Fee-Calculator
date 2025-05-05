@@ -2,11 +2,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader } from "@/components/ui/card"; // Only CardHeader is needed now
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trash2, History as HistoryIcon } from 'lucide-react';
+import { Trash2 } from 'lucide-react'; // HistoryIcon removed as it's not used
 import { format } from 'date-fns';
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history';
@@ -109,10 +109,10 @@ export default function HistoryView() {
 
   // Determine label based on calculation type
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Desired Price' : 'Total Price'; // Updated label for 'with-fee'
+      return type === 'with-fee' ? 'Desired Price' : 'Selling Price'; // Updated label for 'without-fee'
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Selling Price' : 'Item Price'; // Updated label for 'with-fee'
+      return type === 'with-fee' ? 'Selling Price' : 'Item Price';
   };
 
 
@@ -128,7 +128,7 @@ export default function HistoryView() {
           )}
            {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>} {/* Placeholder */}
       </CardHeader>
-      <CardContent className="px-0 pb-2 pt-0">
+      <div className="px-0 pb-2 pt-0"> {/* Removed CardContent */}
         {!isClient ? (
           <div className="space-y-2 p-4">
             <Skeleton className="h-10 w-full rounded-md" />
@@ -177,7 +177,7 @@ export default function HistoryView() {
             </Table>
           </div>
         )}
-      </CardContent>
+      </div>
     </div>
   );
 }

@@ -57,7 +57,7 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
 
 export default function FeeCalculator() {
   const [itemPriceInput, setItemPriceInput] = useState<string>(''); // Renamed for clarity
-  const [totalPriceInput, setTotalPriceInput] = useState<string>(''); // Renamed for clarity
+  const [sellingPriceInput, setSellingPriceInput] = useState<string>(''); // Renamed from totalPriceInput
   const [activeTab, setActiveTab] = useState<'with-fee' | 'without-fee'>('with-fee');
   const [feePercentage, setFeePercentage] = useState<number>(DEFAULT_FEE_PERCENTAGE);
   const [currencySymbol, setCurrencySymbol] = useState<string>(DEFAULT_CURRENCY_SYMBOL);
@@ -147,11 +147,11 @@ export default function FeeCalculator() {
     }
   };
 
-  const handleTotalPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSellingPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => { // Renamed from handleTotalPriceInputChange
     const value = e.target.value;
      // Allow empty string, or numbers (including decimals)
      if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setTotalPriceInput(value);
+      setSellingPriceInput(value); // Update sellingPriceInput state
     }
   };
 
@@ -160,51 +160,52 @@ export default function FeeCalculator() {
      setActiveTab(newTab);
      // Clear the input of the *other* tab when switching
      if (newTab === 'with-fee') {
-       setTotalPriceInput(''); // Clear total price input when switching to 'with-fee'
+       setSellingPriceInput(''); // Clear selling price input when switching to 'with-fee'
      } else {
        setItemPriceInput(''); // Clear item price input when switching to 'without-fee'
      }
    };
 
   // Calculation for 'Item Price + Fee' tab (Calculate Selling Price: SP = X / (1 - Fee%))
-  const { calculatedTotal, feeAmount: feeAmountForward } = useMemo(() => {
+  const { calculatedSellingPrice, feeAmount: feeAmountForward } = useMemo(() => { // Renamed calculatedTotal
     const price = parseFloat(itemPriceInput); // This is X (Desired Item Price)
     if (!isNaN(price) && price >= 0 && !isLoadingSettings && feePercentage < 1) { // Ensure feePercentage is less than 1 (100%)
       const sellingPrice = price / (1 - feePercentage); // SP = X / (1 - Fee%)
       const fee = sellingPrice * feePercentage; // Fee = SP * Fee%
-      return { calculatedTotal: sellingPrice, feeAmount: fee };
+      return { calculatedSellingPrice: sellingPrice, feeAmount: fee }; // Renamed
     }
     // Handle edge case where fee percentage is 100% or more (division by zero or negative)
     if (feePercentage >= 1) {
-        return { calculatedTotal: Infinity, feeAmount: Infinity }; // Or handle as error
+        return { calculatedSellingPrice: Infinity, feeAmount: Infinity }; // Renamed
     }
-    return { calculatedTotal: null, feeAmount: null };
+    return { calculatedSellingPrice: null, feeAmount: null }; // Renamed
   }, [itemPriceInput, feePercentage, isLoadingSettings]);
 
 
-  // Calculation for 'Total Price - Fee = Item Price' tab (USER'S REQUESTED FORMULA)
+  // Calculation for 'Selling Price - Fee = Original Item Price' tab
+  // Formula: Original Item Price = Selling Price - (Selling Price * Fee Percentage)
   const { calculatedItemPrice, feeAmount: feeAmountReverse } = useMemo(() => {
-    const total = parseFloat(totalPriceInput);
-    // Use the user's requested formula: Result = Total Price - (Total Price * Fee Percentage)
-    // Fee is calculated as: Fee = Total Price * Fee Percentage
-    if (!isNaN(total) && total >= 0 && !isLoadingSettings) {
-        const fee = total * feePercentage; // Calculate fee based on total price
-        const itemPriceResult = total - fee; // Calculate result by subtracting the fee from total
+    const sellingPrice = parseFloat(sellingPriceInput); // Renamed from total
+    // Use the formula: Result = Selling Price - (Selling Price * Fee Percentage)
+    // Fee is calculated as: Fee = Selling Price * Fee Percentage
+    if (!isNaN(sellingPrice) && sellingPrice >= 0 && !isLoadingSettings) {
+        const fee = sellingPrice * feePercentage; // Calculate fee based on selling price
+        const itemPriceResult = sellingPrice - fee; // Calculate result by subtracting the fee from selling price
 
         // Ensure result is not negative
         if (itemPriceResult >= 0) {
           return { calculatedItemPrice: itemPriceResult, feeAmount: fee };
         } else {
-           // Fallback case if result is negative (unlikely with this formula if total >= 0)
-           return { calculatedItemPrice: 0, feeAmount: total };
+           // Fallback case if result is negative (unlikely with this formula if sellingPrice >= 0)
+           return { calculatedItemPrice: 0, feeAmount: sellingPrice };
         }
     }
     return { calculatedItemPrice: null, feeAmount: null };
-  }, [totalPriceInput, feePercentage, isLoadingSettings]);
+  }, [sellingPriceInput, feePercentage, isLoadingSettings]); // Use sellingPriceInput
 
 
   const handleBlurWithFee = useCallback(() => {
-    if (calculatedTotal !== null && feeAmountForward !== null && !isLoadingSettings && isFinite(calculatedTotal) && isFinite(feeAmountForward)) {
+    if (calculatedSellingPrice !== null && feeAmountForward !== null && !isLoadingSettings && isFinite(calculatedSellingPrice) && isFinite(feeAmountForward)) { // Renamed calculatedTotal
       const price = parseFloat(itemPriceInput);
        // Only add to history if the input is a valid non-negative number
        if (!isNaN(price) && price >= 0) {
@@ -213,29 +214,29 @@ export default function FeeCalculator() {
            input: price, // Input is Desired Item Price (X)
            feePercentage: feePercentage,
            fee: feeAmountForward, // Fee = SP * Fee%
-           result: calculatedTotal, // Result is Selling Price (SP)
+           result: calculatedSellingPrice, // Result is Selling Price (SP) - Renamed
            currencySymbol: currencySymbol,
          });
        }
     }
-  }, [itemPriceInput, calculatedTotal, feeAmountForward, feePercentage, currencySymbol, isLoadingSettings]);
+  }, [itemPriceInput, calculatedSellingPrice, feeAmountForward, feePercentage, currencySymbol, isLoadingSettings]); // Renamed calculatedTotal
 
   const handleBlurWithoutFee = useCallback(() => {
     if (calculatedItemPrice !== null && feeAmountReverse !== null && !isLoadingSettings) {
-       const total = parseFloat(totalPriceInput);
+       const sellingPrice = parseFloat(sellingPriceInput); // Renamed from total
         // Only add to history if the input is a valid non-negative number
-       if (!isNaN(total) && total >= 0) {
+       if (!isNaN(sellingPrice) && sellingPrice >= 0) { // Use sellingPrice
          addHistoryEntry({
            type: 'without-fee',
-           input: total, // Input is Total Price
+           input: sellingPrice, // Input is Selling Price - Renamed
            feePercentage: feePercentage,
-           fee: feeAmountReverse, // Fee calculated based on Total Price * Fee Percentage
-           result: calculatedItemPrice, // Result is Total Price - Fee
+           fee: feeAmountReverse, // Fee calculated based on Selling Price * Fee Percentage
+           result: calculatedItemPrice, // Result is Original Item Price (Selling Price - Fee)
            currencySymbol: currencySymbol,
          });
        }
     }
-  }, [totalPriceInput, calculatedItemPrice, feeAmountReverse, feePercentage, currencySymbol, isLoadingSettings]);
+  }, [sellingPriceInput, calculatedItemPrice, feeAmountReverse, feePercentage, currencySymbol, isLoadingSettings]); // Use sellingPriceInput
 
 
   const formatCurrency = (value: string | number | null) => {
@@ -270,13 +271,13 @@ export default function FeeCalculator() {
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="with-fee">Item Price + Fee</TabsTrigger>
-              <TabsTrigger value="without-fee">Total Price - Fee</TabsTrigger>
+              <TabsTrigger value="without-fee">Selling Price - Fee</TabsTrigger> {/* Updated Tab Trigger Label */}
             </TabsList>
             <TabsContent value="with-fee" className="mt-6 space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="item-price-input" className="flex items-center gap-2">
                   <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                  Desired Item Price (Before Fee is Added)
+                  Desired Item Price (Before Fee)
                 </Label>
                 <Input
                   id="item-price-input"
@@ -290,7 +291,7 @@ export default function FeeCalculator() {
                   aria-label="Desired Item Price"
                 />
                  <p className="text-xs text-muted-foreground">
-                    This calculates the Selling Price needed: Selling Price = Desired Price / (1 - Fee %)
+                    Calculates the Selling Price needed: Selling Price = Desired Price / (1 - Fee %)
                   </p>
               </div>
 
@@ -314,33 +315,33 @@ export default function FeeCalculator() {
                  <div className="flex justify-between items-center">
                   <Label className="flex items-center gap-2 font-medium text-sm">
                     <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                    Total Selling Price (Inc. Fee)
+                    Required Selling Price (Inc. Fee) {/* Updated Label */}
                   </Label>
                   <span className="text-lg font-bold text-accent">
-                     {formatCurrency(calculatedTotal)}
+                     {formatCurrency(calculatedSellingPrice)} {/* Renamed calculatedTotal */}
                   </span>
                 </div>
               </div>
             </TabsContent>
             <TabsContent value="without-fee" className="mt-6 space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="total-price-input" className="flex items-center gap-2">
+                <Label htmlFor="selling-price-input" className="flex items-center gap-2"> {/* Renamed htmlFor */}
                    <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                   Total Price (Inc. Fee)
+                   Selling Price (Inc. Fee) {/* Updated Label */}
                 </Label>
                 <Input
-                  id="total-price-input"
+                  id="selling-price-input" // Renamed id
                   type="text"
                   inputMode="decimal" // Better mobile keyboard support
                   placeholder={`e.g., 1300.00`}
-                  value={totalPriceInput}
-                  onChange={handleTotalPriceInputChange}
+                  value={sellingPriceInput} // Use sellingPriceInput state
+                  onChange={handleSellingPriceInputChange} // Use renamed handler
                   onBlur={handleBlurWithoutFee}
                   className="bg-secondary focus:ring-accent text-base"
-                  aria-label="Total Price (Including Fee)"
+                  aria-label="Selling Price (Including Fee)" // Updated aria-label
                 />
                  <p className="text-xs text-muted-foreground">
-                    This calculates the Original Price: Original Price = Total Price - (Total Price * Fee %)
+                    Calculates the Original Price: Original Item Price = Selling Price - (Selling Price * Fee %) {/* Updated Description */}
                  </p>
               </div>
 
@@ -364,7 +365,7 @@ export default function FeeCalculator() {
                   <div className="flex justify-between items-center">
                    <Label className="flex items-center gap-2 font-medium text-sm">
                      <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                     Original Item Price
+                     Original Item Price (After Fee) {/* Updated Label */}
                    </Label>
                    <span className="text-lg font-bold text-accent">
                       {formatCurrency(calculatedItemPrice)}
