@@ -98,6 +98,10 @@ export default function FeeCalculator() {
     finalCustomerPriceReverse: number | null; // Added for clarity in Payout calc
   } | null>(null);
 
+  // State to track if an initial calculation has been made for each tab
+  const [hasCalculatedSellingPrice, setHasCalculatedSellingPrice] = useState(false);
+  const [hasCalculatedPayout, setHasCalculatedPayout] = useState(false);
+
 
   // --- Effects ---
 
@@ -318,20 +322,24 @@ export default function FeeCalculator() {
    const handleTabChange = (value: string) => {
      const newTab = value as 'selling-price' | 'payout';
      setActiveTab(newTab);
-     // Clear inputs and calculated results when switching tabs
+     // Clear inputs when switching tabs
      setItemPriceInput('');
      setSellingPriceBeforeDiscountInput('');
+     // Reset calculated results and flags when switching tabs
+     setCalculatedResultsSellingPrice(null);
+     setCalculatedResultsPayout(null);
+     setHasCalculatedSellingPrice(false);
+     setHasCalculatedPayout(false);
      // Reset discount selection to '0%' but keep custom input if it was active
      // setSelectedDiscountOption('0');
      // setCustomDiscountInput(''); // Let's keep custom input if they switch back
-     setCalculatedResultsSellingPrice(null);
-     setCalculatedResultsPayout(null);
    };
 
   // Calculate and optionally add to history on button click for 'selling-price' tab
   const handleCalculateSellingPrice = useCallback(() => {
     const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
     setCalculatedResultsSellingPrice(results); // Update display state
+    setHasCalculatedSellingPrice(true); // Mark that calculation has been done
 
     // Add to history only on explicit calculation
     if (
@@ -371,6 +379,7 @@ export default function FeeCalculator() {
   const handleCalculatePayout = useCallback(() => {
      const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
      setCalculatedResultsPayout(results); // Update display state
+     setHasCalculatedPayout(true); // Mark that calculation has been done
 
      // Add to history only on explicit calculation
      if (
@@ -406,17 +415,17 @@ export default function FeeCalculator() {
 
   // --- Auto-Recalculation Effect ---
   // This useEffect will run whenever discountPercentage or feePercentage changes,
-  // but only *after* an initial calculation has been made (results are not null).
+  // but only *after* an initial calculation has been made using the button.
   useEffect(() => {
-    // Only run if not loading settings and a calculation has already been performed
+    // Only run if not loading settings and the respective calculation flag is true
     if (isLoadingSettings) return;
 
-    if (activeTab === 'selling-price' && calculatedResultsSellingPrice !== null && itemPriceInput) {
+    if (activeTab === 'selling-price' && hasCalculatedSellingPrice && itemPriceInput) {
       // console.log("Recalculating Selling Price due to discount/fee change...");
       const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
       setCalculatedResultsSellingPrice(results);
       // DO NOT add to history here automatically
-    } else if (activeTab === 'payout' && calculatedResultsPayout !== null && sellingPriceBeforeDiscountInput) {
+    } else if (activeTab === 'payout' && hasCalculatedPayout && sellingPriceBeforeDiscountInput) {
       // console.log("Recalculating Payout due to discount/fee change...");
       const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
       setCalculatedResultsPayout(results);
@@ -427,8 +436,8 @@ export default function FeeCalculator() {
     feePercentage,      // Recalc when fee changes
     activeTab,          // Ensure we only recalc the active tab logic
     isLoadingSettings,  // Wait for settings
-    calculatedResultsSellingPrice, // Only recalc if already calculated once
-    calculatedResultsPayout,       // Only recalc if already calculated once
+    hasCalculatedSellingPrice, // Only recalc if button was clicked for this tab
+    hasCalculatedPayout,       // Only recalc if button was clicked for this tab
     itemPriceInput,                // Need input value for recalc
     sellingPriceBeforeDiscountInput, // Need input value for recalc
     calculateSellingPriceLogic,    // Dependency
