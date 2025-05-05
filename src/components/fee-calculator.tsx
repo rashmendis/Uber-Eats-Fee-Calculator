@@ -129,6 +129,7 @@ export default function FeeCalculator() {
        if (event.key === SETTINGS_STORAGE_KEY && event.newValue) {
           loadAndUpdateSettings(); // Reload settings on change
        } else if (event.key === null || (event.key === SETTINGS_STORAGE_KEY && !event.newValue)) {
+          // Handle case where settings are cleared or removed
           setFeePercentage(DEFAULT_FEE_PERCENTAGE);
           setCurrencySymbol(DEFAULT_CURRENCY_SYMBOL);
        }
@@ -230,7 +231,7 @@ export default function FeeCalculator() {
     discountAmountReverse,              // SP_before_discount - SP_after_discount
     feeAmountReverse                    // SP_before_discount * F%
   } = useMemo(() => {
-    const customerPrice = parseFloat(sellingPriceInput); // SP_after_discount
+    const customerPrice = parseFloat(sellingPriceInput); // SP_after_discount (the price customer pays)
     if (!isNaN(customerPrice) && customerPrice >= 0 && !isLoadingSettings) {
       // Avoid division by zero if discount is 100%
       if (discountPercentage === 1 && customerPrice > 0) {
@@ -242,10 +243,10 @@ export default function FeeCalculator() {
       }
 
 
-      const spBeforeDiscount = customerPrice / (1 - discountPercentage);
-      const feeAmt = spBeforeDiscount * feePercentage;
-      const sellerReceives = spBeforeDiscount * (1 - feePercentage); // Equivalent to spBeforeDiscount - feeAmt
-      const discountAmt = spBeforeDiscount - customerPrice;
+      const spBeforeDiscount = customerPrice / (1 - discountPercentage); // This is the price BEFORE the discount was applied
+      const feeAmt = spBeforeDiscount * feePercentage; // Fee is calculated on the price BEFORE discount
+      const sellerReceives = spBeforeDiscount * (1 - feePercentage); // Seller receives the pre-discount price minus the fee calculated on it
+      const discountAmt = spBeforeDiscount - customerPrice; // The actual monetary value of the discount
 
       // Ensure results are not negative due to floating point issues
       const finalSellerReceives = Math.max(0, sellerReceives);
@@ -351,6 +352,7 @@ export default function FeeCalculator() {
     if (!isFinite(Number(value))) return 'N/A';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
+    // Handle negative zero
     if (Object.is(numberValue, -0)) {
        return `${currencySymbol} 0.00`;
     }
@@ -644,3 +646,4 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
+

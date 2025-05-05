@@ -11,7 +11,7 @@ export interface HistoryEntry {
   type: 'with-fee' | 'without-fee';
   /**
    * The primary value entered by the user.
-   * If type is 'with-fee', this is the Desired Item Price (X) the seller wants to receive.
+   * If type is 'with-fee', this is the Desired Item Price (X) the seller wants to receive (before fee, before discount).
    * If type is 'without-fee', this is the Selling Price the customer pays (after any discount).
    */
   input: number;
@@ -34,8 +34,9 @@ export interface HistoryEntry {
   /**
    * The final price relevant to the context.
    * If type is 'with-fee', this is the Final Price the customer pays (Selling Price after discount).
-   * If type is 'without-fee', this is the Original Selling Price *before* discount was applied.
+   * If type is 'without-fee', this is the Original Selling Price *before* discount was applied (Customer Price / (1 - Discount %)).
    */
   finalPrice: number;
   currencySymbol: string;
 }
+

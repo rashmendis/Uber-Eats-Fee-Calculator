@@ -90,6 +90,7 @@ export default function HistoryView() {
     setHistory([]);
     try {
       localStorage.removeItem(HISTORY_STORAGE_KEY);
+      // Dispatch event to notify other potential listeners (though unlikely needed for simple clear)
       window.dispatchEvent(new StorageEvent('storage', { key: HISTORY_STORAGE_KEY, newValue: null, storageArea: localStorage }));
     } catch (error) {
       console.error("Failed to clear history from localStorage:", error);
@@ -99,8 +100,9 @@ export default function HistoryView() {
   const formatCurrency = (value: number | null, symbol: string) => {
     if (value === null || value === undefined || isNaN(value)) return '-';
     const displaySymbol = symbol || DEFAULT_CURRENCY_SYMBOL;
+    // Handle negative zero
     if (Object.is(value, -0)) return `${displaySymbol} 0.00`;
-    if (!isFinite(value)) return 'N/A';
+    if (!isFinite(value)) return 'N/A'; // Handle Infinity
     return `${displaySymbol} ${value.toFixed(2)}`;
   };
 
@@ -132,7 +134,7 @@ export default function HistoryView() {
                 Clear
               </Button>
             )}
-             {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>} {/* Placeholder */}
+             {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>} {/* Placeholder to prevent layout shift */}
         </CardHeader>
         <div className="px-0 pb-2 pt-0"> {/* Removed CardContent */}
           {!isClient ? (
@@ -147,10 +149,15 @@ export default function HistoryView() {
             </div>
           ) : (
             <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border rounded-lg mx-4 mb-4 relative">
+              {/* Use border-collapse on table */}
               <Table className="w-full border-collapse">
                 {/* Sticky header */}
                 <TableHeader className="sticky top-0 z-10 bg-card border-b">
-                  <TableRow className="hover:bg-transparent"> {/* Prevent hover effect on header row */}
+                  {/* Remove hover effect from header row */}
+                  <TableRow className="hover:bg-transparent">
+                     {/* Use px-3 py-2 sm:px-4 sm:py-3 consistently for padding */}
+                     {/* Add whitespace-nowrap to prevent wrapping */}
+                     {/* Add border-r to cells for vertical lines */}
                      <TableHead className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Timestamp</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Input</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
@@ -168,7 +175,7 @@ export default function HistoryView() {
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap"> {/* Last column doesn't need border-r */}
                         Final Price
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
@@ -183,11 +190,14 @@ export default function HistoryView() {
                 </TableHeader>
                 <TableBody>
                   {history.map((entry) => (
+                    // Ensure border-b is applied correctly, last:border-b-0 removes border from last row
                     <TableRow key={entry.id} className="border-b last:border-b-0">
+                      {/* Consistent padding and border */}
                       <TableCell className="text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 truncate border-r">
                         {format(new Date(entry.timestamp), 'PPp')}
                       </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                          {/* Helper text for input type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                           {formatCurrency(entry.input, entry.currencySymbol)}
                       </TableCell>
@@ -202,10 +212,12 @@ export default function HistoryView() {
                          {formatCurrency(entry.discountAmount, entry.currencySymbol)}
                        </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3 border-r">
+                          {/* Helper text for result type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                           {formatCurrency(entry.result, entry.currencySymbol)}
                       </TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3">
+                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3"> {/* Last column */}
+                          {/* Helper text for final price type */}
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getFinalPriceLabel(entry.type)}</span>
                           {formatCurrency(entry.finalPrice, entry.currencySymbol)}
                        </TableCell>
