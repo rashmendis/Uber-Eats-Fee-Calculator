@@ -148,7 +148,7 @@ export default function HistoryView() {
                    <TableHead className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Timestamp</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Input</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee (%)</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee Amt</TableHead>
+                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee</TableHead>
                    <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Result</TableHead>
                 </TableRow>
               </TableHeader>
