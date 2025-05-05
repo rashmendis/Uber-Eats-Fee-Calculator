@@ -46,12 +46,14 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
         lastEntry.discountPercentage === newEntry.discountPercentage &&
         lastEntry.finalPrice === newEntry.finalPrice // Also check final price for duplicates
       ) {
+        // console.log("Skipping duplicate history entry");
         return; // Don't add exact duplicate
       }
     }
 
     const updatedHistory = [newEntry, ...currentHistory].slice(0, MAX_HISTORY_LENGTH);
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+    // console.log("History entry added:", newEntry);
 
     // Dispatch a storage event to notify other components (like HistoryView)
     window.dispatchEvent(new StorageEvent('storage', {
@@ -68,7 +70,7 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
 
 export default function FeeCalculator() {
   // Inputs
-  const [itemPriceInput, setItemPriceInput] = useState<string>(''); // Renamed: Used in "Selling Price Calculator" for Desired Payout
+  const [desiredPayoutInput, setDesiredPayoutInput] = useState<string>(''); // Used in "Selling Price Calculator"
   const [sellingPriceBeforeDiscountInput, setSellingPriceBeforeDiscountInput] = useState<string>(''); // Used in "Payout Calculator"
 
   // Discount/Offer state
@@ -84,19 +86,19 @@ export default function FeeCalculator() {
   const [activeTab, setActiveTab] = useState<'selling-price' | 'payout'>('selling-price');
 
   // Calculated results state
-  const [calculatedResultsSellingPrice, setCalculatedResultsSellingPrice] = useState<{
+  const [sellingPriceCalcResults, setSellingPriceCalcResults] = useState<{
     sellingPriceBeforeDiscount: number | null | typeof Infinity;
     customerPriceAfterDiscount: number | null | typeof Infinity;
-    discountAmountForward: number | null;
-    feeAmountForward: number | null | typeof Infinity;
-    actualPayout: number | null; // Added for clarity
+    discountAmount: number | null;
+    feeAmount: number | null | typeof Infinity;
+    actualPayout: number | null; // This will always match the desiredPayoutInput when calculated
   } | null>(null);
 
-  const [calculatedResultsPayout, setCalculatedResultsPayout] = useState<{
-    itemPriceSellerReceives: number | null; // Renamed from itemPriceAfterFee
-    discountAmountReverse: number | null;
-    feeAmountReverse: number | null;
-    finalCustomerPriceReverse: number | null; // Added for clarity in Payout calc
+  const [payoutCalcResults, setPayoutCalcResults] = useState<{
+    payoutSellerReceives: number | null;
+    discountAmount: number | null;
+    feeAmount: number | null;
+    finalCustomerPrice: number | null; // Price after discount
   } | null>(null);
 
   // State to track if an initial calculation has been made for each tab
@@ -204,41 +206,42 @@ export default function FeeCalculator() {
   // Calculation logic for 'Selling Price Calculator' tab
   // Input: Desired Payout (X), Discount %, Fee %
   // Output: Selling Price (Before Discount), Customer Price (After Discount), Discount Amount, Fee Amount, Actual Payout (== Desired Payout)
-  const calculateSellingPriceLogic = useCallback((priceInput: string, discount: number, fee: number) => {
-      const desiredPayout = parseFloat(priceInput); // X
+  const calculateSellingPriceLogic = useCallback((payoutInput: string, discount: number, fee: number) => {
+      const desiredPayout = parseFloat(payoutInput); // X
       if (isNaN(desiredPayout) || desiredPayout < 0) {
-         return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null, actualPayout: null };
+         return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmount: null, feeAmount: null, actualPayout: null };
       }
       if (fee >= 1) {
           // Handle 100% fee case to avoid division by zero
-          return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmountForward: 0, feeAmountForward: Infinity, actualPayout: desiredPayout };
+          return { sellingPriceBeforeDiscount: Infinity, customerPriceAfterDiscount: Infinity, discountAmount: 0, feeAmount: Infinity, actualPayout: desiredPayout };
       }
 
       // Calculate Selling Price (Before Discount) based on Desired Payout and Fee
       // SP_Before_Discount * (1 - Fee) = Desired_Payout
       const spBeforeDiscount = desiredPayout / (1 - fee);
 
-      // Calculate Customer Price (After Discount)
-      const spAfterDiscount = spBeforeDiscount * (1 - discount); // Customer pays this
-
-      // Calculate Discount Amount
-      const discountAmt = spBeforeDiscount - spAfterDiscount;
-
       // Calculate Fee Amount (based on Selling Price *Before* discount)
       const feeAmt = spBeforeDiscount * fee;
+
+      // Calculate Discount Amount (based on SP Before Discount)
+      const discountAmt = spBeforeDiscount * discount;
+
+       // Calculate Customer Price (After Discount)
+      const spAfterDiscount = spBeforeDiscount * (1 - discount); // Customer pays this
 
       // Handle potential floating point inaccuracies for display consistency
       const finalSpAfterDiscount = Math.max(0, spAfterDiscount);
       const finalDiscountAmt = Math.max(0, discountAmt); // Ensure discount isn't negative
 
-      // The 'actual payout' here is just the input 'desired payout'
+      // The 'actual payout' in this calculation context is defined as matching the input 'desired payout'
+      // It represents the target payout used to determine the necessary selling price.
       const actualPayoutResult = desiredPayout;
 
       return {
         sellingPriceBeforeDiscount: spBeforeDiscount,
         customerPriceAfterDiscount: finalSpAfterDiscount,
-        discountAmountForward: finalDiscountAmt,
-        feeAmountForward: feeAmt,
+        discountAmount: finalDiscountAmt,
+        feeAmount: feeAmt,
         actualPayout: actualPayoutResult
       };
   }, []);
@@ -251,7 +254,7 @@ export default function FeeCalculator() {
       const spBeforeDiscount = parseFloat(spInput);
 
       if (isNaN(spBeforeDiscount) || spBeforeDiscount < 0) {
-          return { itemPriceSellerReceives: null, discountAmountReverse: null, feeAmountReverse: null, finalCustomerPriceReverse: null };
+          return { payoutSellerReceives: null, discountAmount: null, feeAmount: null, finalCustomerPrice: null };
       }
 
       // Calculate Discount Amount (based on SP Before Discount)
@@ -273,20 +276,23 @@ export default function FeeCalculator() {
       const finalCustomerPrice = Math.max(0, priceAfterDiscount);
 
       return {
-          itemPriceSellerReceives: finalSellerReceives,
-          discountAmountReverse: finalDiscountAmt,
-          feeAmountReverse: finalFeeAmt,
-          finalCustomerPriceReverse: finalCustomerPrice // This is the Price After Discount
+          payoutSellerReceives: finalSellerReceives,
+          discountAmount: finalDiscountAmt,
+          feeAmount: finalFeeAmt,
+          finalCustomerPrice: finalCustomerPrice // This is the Price After Discount
       };
   }, []);
 
   // --- Event Handlers ---
 
-  const handleItemPriceInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDesiredPayoutInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // Allow empty or valid decimal numbers
     if (value === '' || /^\d*\.?\d*$/.test(value)) {
-      setItemPriceInput(value);
+      setDesiredPayoutInput(value);
+      // Optionally reset calculation results when input changes significantly
+      // setSellingPriceCalcResults(null);
+      // setHasCalculatedSellingPrice(false);
     }
   };
 
@@ -295,6 +301,9 @@ export default function FeeCalculator() {
      // Allow empty or valid decimal numbers
      if (value === '' || /^\d*\.?\d*$/.test(value)) {
       setSellingPriceBeforeDiscountInput(value);
+       // Optionally reset calculation results when input changes significantly
+      // setPayoutCalcResults(null);
+      // setHasCalculatedPayout(false);
     }
   };
 
@@ -304,7 +313,7 @@ export default function FeeCalculator() {
       if (value !== 'custom') {
           setCustomDiscountInput('');
       }
-      // Note: Recalculation based on this change is handled by useEffect
+      // Auto-recalculation is handled by useEffect below
   };
 
   const handleCustomDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -319,7 +328,7 @@ export default function FeeCalculator() {
       } else if (numericValue > 100) {
           setCustomDiscountInput('100');
       }
-      // Note: Recalculation based on this change is handled by useEffect
+      // Auto-recalculation is handled by useEffect below
     }
   };
 
@@ -328,11 +337,11 @@ export default function FeeCalculator() {
      const newTab = value as 'selling-price' | 'payout';
      setActiveTab(newTab);
      // Clear inputs when switching tabs
-     setItemPriceInput('');
+     setDesiredPayoutInput('');
      setSellingPriceBeforeDiscountInput('');
      // Reset calculated results and flags when switching tabs
-     setCalculatedResultsSellingPrice(null);
-     setCalculatedResultsPayout(null);
+     setSellingPriceCalcResults(null);
+     setPayoutCalcResults(null);
      setHasCalculatedSellingPrice(false);
      setHasCalculatedPayout(false);
      // Reset discount selection to '0%' and clear custom input
@@ -340,39 +349,39 @@ export default function FeeCalculator() {
      setCustomDiscountInput('');
    };
 
-  // Calculate and optionally add to history on button click for 'selling-price' tab
+  // Calculate and add to history on button click for 'selling-price' tab
   const handleCalculateSellingPrice = useCallback(() => {
-    const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
-    setCalculatedResultsSellingPrice(results); // Update display state
+    const results = calculateSellingPriceLogic(desiredPayoutInput, discountPercentage, feePercentage);
+    setSellingPriceCalcResults(results); // Update display state
     setHasCalculatedSellingPrice(true); // Mark that calculation has been done
 
-    // Add to history only on explicit calculation
+    // Add to history only on explicit calculation and if results are valid numbers
     if (
       results.sellingPriceBeforeDiscount !== null &&
       results.customerPriceAfterDiscount !== null &&
-      results.feeAmountForward !== null &&
+      results.feeAmount !== null &&
       !isLoadingSettings &&
       isFinite(results.sellingPriceBeforeDiscount) &&
       isFinite(results.customerPriceAfterDiscount) &&
-      isFinite(results.feeAmountForward)
+      isFinite(results.feeAmount)
     ) {
-      const price = parseFloat(itemPriceInput);
-      if (!isNaN(price) && price >= 0) {
+      const payout = parseFloat(desiredPayoutInput);
+      if (!isNaN(payout) && payout >= 0) {
         addHistoryEntry({
           type: 'selling-price',
-          input: price, // This is the Desired Payout
+          input: payout, // This is the Desired Payout
           feePercentage: feePercentage,
           discountPercentage: discountPercentage,
-          fee: results.feeAmountForward,
+          fee: results.feeAmount,
           result: results.sellingPriceBeforeDiscount, // SP Before Discount
-          discountAmount: results.discountAmountForward ?? 0,
+          discountAmount: results.discountAmount ?? 0,
           finalPrice: results.customerPriceAfterDiscount, // Customer Pays
           currencySymbol: currencySymbol,
         });
       }
     }
   }, [
-    itemPriceInput,
+    desiredPayoutInput,
     discountPercentage,
     feePercentage,
     currencySymbol,
@@ -380,19 +389,19 @@ export default function FeeCalculator() {
     calculateSellingPriceLogic, // Dependency
   ]);
 
-  // Calculate and optionally add to history on button click for 'payout' tab
+  // Calculate and add to history on button click for 'payout' tab
   const handleCalculatePayout = useCallback(() => {
      const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
-     setCalculatedResultsPayout(results); // Update display state
+     setPayoutCalcResults(results); // Update display state
      setHasCalculatedPayout(true); // Mark that calculation has been done
 
-     // Add to history only on explicit calculation
+     // Add to history only on explicit calculation and if results are valid numbers
      if (
-       results.itemPriceSellerReceives !== null &&
-       results.feeAmountReverse !== null &&
+       results.payoutSellerReceives !== null &&
+       results.feeAmount !== null &&
        !isLoadingSettings &&
-       isFinite(results.itemPriceSellerReceives) &&
-       isFinite(results.feeAmountReverse)
+       isFinite(results.payoutSellerReceives) &&
+       isFinite(results.feeAmount)
      ) {
        const spBeforeDiscount = parseFloat(sellingPriceBeforeDiscountInput);
        if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
@@ -401,10 +410,10 @@ export default function FeeCalculator() {
            input: spBeforeDiscount, // SP Before Discount
            feePercentage: feePercentage,
            discountPercentage: discountPercentage,
-           fee: results.feeAmountReverse,
-           result: results.itemPriceSellerReceives, // Payout
-           discountAmount: results.discountAmountReverse ?? 0,
-           finalPrice: results.finalCustomerPriceReverse ?? 0, // Customer Pays
+           fee: results.feeAmount,
+           result: results.payoutSellerReceives, // Payout
+           discountAmount: results.discountAmount ?? 0,
+           finalPrice: results.finalCustomerPrice ?? 0, // Customer Pays
            currencySymbol: currencySymbol,
          });
        }
@@ -422,19 +431,24 @@ export default function FeeCalculator() {
   // This useEffect will run whenever discountPercentage or feePercentage changes,
   // but only *after* an initial calculation has been made using the button.
   useEffect(() => {
-    // Only run if not loading settings and the respective calculation flag is true
-    if (isLoadingSettings) return;
+    // console.log("Auto-recalc effect triggered. Active tab:", activeTab, "Has calculated SP:", hasCalculatedSellingPrice, "Has calculated Payout:", hasCalculatedPayout);
+    if (isLoadingSettings) {
+      // console.log("Skipping auto-recalc: settings loading");
+      return;
+    }
 
-    if (activeTab === 'selling-price' && hasCalculatedSellingPrice && itemPriceInput) {
-      // console.log("Recalculating Selling Price due to discount/fee change...");
-      const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
-      setCalculatedResultsSellingPrice(results);
+    if (activeTab === 'selling-price' && hasCalculatedSellingPrice && desiredPayoutInput) {
+      // console.log("Auto-recalculating Selling Price...");
+      const results = calculateSellingPriceLogic(desiredPayoutInput, discountPercentage, feePercentage);
+      setSellingPriceCalcResults(results);
       // DO NOT add to history here automatically
     } else if (activeTab === 'payout' && hasCalculatedPayout && sellingPriceBeforeDiscountInput) {
-      // console.log("Recalculating Payout due to discount/fee change...");
+      // console.log("Auto-recalculating Payout...");
       const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
-      setCalculatedResultsPayout(results);
+      setPayoutCalcResults(results);
       // DO NOT add to history here automatically
+    } else {
+       // console.log("Skipping auto-recalc: conditions not met");
     }
   }, [
     discountPercentage, // Recalc when discount changes
@@ -443,7 +457,7 @@ export default function FeeCalculator() {
     isLoadingSettings,  // Wait for settings
     hasCalculatedSellingPrice, // Only recalc if button was clicked for this tab
     hasCalculatedPayout,       // Only recalc if button was clicked for this tab
-    itemPriceInput,                // Need input value for recalc
+    desiredPayoutInput,                // Need input value for recalc
     sellingPriceBeforeDiscountInput, // Need input value for recalc
     calculateSellingPriceLogic,    // Dependency
     calculatePayoutLogic           // Dependency
@@ -501,17 +515,17 @@ export default function FeeCalculator() {
                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Use items-end */}
                     {/* Desired Payout Input (Takes 2 columns) */}
                     <div className="space-y-2 sm:col-span-2">
-                       <Label htmlFor="item-price-input" className="flex items-center gap-2">
+                       <Label htmlFor="desired-payout-input" className="flex items-center gap-2">
                           <ReceiptText className="h-4 w-4 text-muted-foreground" /> {/* Icon */}
                           Desired Payout (Seller Receives)
                        </Label>
                        <Input
-                          id="item-price-input"
+                          id="desired-payout-input"
                           type="text"
                           inputMode="decimal"
                           placeholder={`${currencySymbol} e.g., 700.00`}
-                          value={itemPriceInput}
-                          onChange={handleItemPriceInputChange}
+                          value={desiredPayoutInput}
+                          onChange={handleDesiredPayoutInputChange}
                           className="bg-secondary focus:ring-accent text-base"
                           aria-label="Desired Payout (Seller Receives)"
                        />
@@ -592,8 +606,8 @@ export default function FeeCalculator() {
                               </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.sellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsSellingPrice?.sellingPriceBeforeDiscount ?? null)}
+                       <span className={cn("font-semibold text-sm", sellingPriceCalcResults?.sellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(sellingPriceCalcResults?.sellingPriceBeforeDiscount ?? null)}
                        </span>
                      </div>
 
@@ -611,8 +625,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm text-destructive", calculatedResultsSellingPrice?.feeAmountForward !== null ? "" : "text-muted-foreground")}>
-                         - {formatCurrency(calculatedResultsSellingPrice?.feeAmountForward ?? null)}
+                       <span className={cn("font-semibold text-sm text-destructive", sellingPriceCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}>
+                         - {formatCurrency(sellingPriceCalcResults?.feeAmount ?? null)}
                        </span>
                      </div>
 
@@ -624,12 +638,12 @@ export default function FeeCalculator() {
                              Discount Amount ({displayDiscountPercentage}%)
                           </Label>
                           <span className="font-semibold text-sm text-destructive">
-                            - {formatCurrency(calculatedResultsSellingPrice?.discountAmountForward ?? null)}
+                            - {formatCurrency(sellingPriceCalcResults?.discountAmount ?? null)}
                           </span>
                         </div>
                      )}
 
-                      {/* Actual Payout (Seller Receives) - Added */}
+                      {/* Actual Payout (Seller Receives) - Matches Desired Payout Input */}
                      <div className="flex justify-between items-center">
                        <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
                          <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
@@ -639,12 +653,12 @@ export default function FeeCalculator() {
                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                              </TooltipTrigger>
                              <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">This is the Desired Payout you entered initially.</p>
+                                <p className="text-xs">This matches the 'Desired Payout' you entered. It's the target used to calculate the selling price.</p>
                              </TooltipContent>
                           </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.actualPayout !== null ? "text-muted-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsSellingPrice?.actualPayout ?? null)}
+                       <span className={cn("font-semibold text-sm", sellingPriceCalcResults?.actualPayout !== null ? "text-muted-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(sellingPriceCalcResults?.actualPayout ?? null)}
                        </span>
                      </div>
 
@@ -667,7 +681,7 @@ export default function FeeCalculator() {
                          </Tooltip>
                        </Label>
                        <span className="text-lg font-bold text-accent">
-                         {formatCurrency(calculatedResultsSellingPrice?.customerPriceAfterDiscount ?? null)}
+                         {formatCurrency(sellingPriceCalcResults?.customerPriceAfterDiscount ?? null)}
                        </span>
                      </div>
                   </div>
@@ -769,8 +783,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsPayout?.finalCustomerPriceReverse !== null ? "text-muted-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsPayout?.finalCustomerPriceReverse ?? null)}
+                       <span className={cn("font-semibold text-sm", payoutCalcResults?.finalCustomerPrice !== null ? "text-muted-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(payoutCalcResults?.finalCustomerPrice ?? null)}
                        </span>
                      </div>
 
@@ -782,7 +796,7 @@ export default function FeeCalculator() {
                               Discount Given ({displayDiscountPercentage}%)
                            </Label>
                            <span className="font-semibold text-sm text-destructive">
-                              - {formatCurrency(calculatedResultsPayout?.discountAmountReverse ?? null)}
+                              - {formatCurrency(payoutCalcResults?.discountAmount ?? null)}
                            </span>
                         </div>
                      )}
@@ -801,8 +815,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                       </Label>
-                      <span className={cn("font-semibold text-sm text-destructive", calculatedResultsPayout?.feeAmountReverse !== null ? "" : "text-muted-foreground")}>
-                         - {formatCurrency(calculatedResultsPayout?.feeAmountReverse ?? null)}
+                      <span className={cn("font-semibold text-sm text-destructive", payoutCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}>
+                         - {formatCurrency(payoutCalcResults?.feeAmount ?? null)}
                       </span>
                     </div>
 
@@ -825,7 +839,7 @@ export default function FeeCalculator() {
                         </Tooltip>
                      </Label>
                      <span className="text-lg font-bold text-accent">
-                        {formatCurrency(calculatedResultsPayout?.itemPriceSellerReceives ?? null)}
+                        {formatCurrency(payoutCalcResults?.payoutSellerReceives ?? null)}
                      </span>
                    </div>
 
@@ -838,5 +852,3 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
-
-    

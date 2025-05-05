@@ -43,6 +43,3 @@ export interface HistoryEntry {
   finalPrice: number;
   currencySymbol: string;
 }
-
-
-    

@@ -144,5 +144,3 @@ The application uses the browser's `localStorage` to store data persistently on 
 *   `npm run start`: Starts the production server (requires running `npm run build` first).
 *   `npm run lint`: Runs the Next.js linter.
 *   `npm run typecheck`: Checks TypeScript types.
-
-    
