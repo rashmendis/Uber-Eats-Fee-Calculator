@@ -12,9 +12,7 @@ const Table = React.forwardRef<
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
       {...props} // Spread remaining props
-    >
-      {children} {/* Render children explicitly inside the table */}
-    </table>
+    >{children}</table> {/* Render children directly inside the table without extra whitespace */}
   </div>
 ))
 Table.displayName = "Table"
@@ -23,9 +21,7 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>
-    {children} {/* Render children explicitly inside the thead */}
-  </thead>
+  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props}>{children}</thead> // Render children directly inside the thead without extra whitespace
 ))
 TableHeader.displayName = "TableHeader"
 
@@ -37,9 +33,7 @@ const TableBody = React.forwardRef<
     ref={ref}
     className={cn("[&_tr:last-child]:border-0", className)}
     {...props}
-  >
-     {children} {/* Render children explicitly inside the tbody */}
-  </tbody>
+  >{children}</tbody> // Render children directly inside the tbody without extra whitespace
 ))
 TableBody.displayName = "TableBody"
 
@@ -54,9 +48,7 @@ const TableFooter = React.forwardRef<
       className
     )}
     {...props}
-  >
-     {children} {/* Render children explicitly inside the tfoot */}
-  </tfoot>
+  >{children}</tfoot> // Render children directly inside the tfoot without extra whitespace
 ))
 TableFooter.displayName = "TableFooter"
 
@@ -71,9 +63,7 @@ const TableRow = React.forwardRef<
       className
     )}
     {...props}
-  >
-    {children} {/* Render children explicitly inside the tr */}
-  </tr>
+  >{children}</tr> // Render children directly inside the tr without extra whitespace
 ))
 TableRow.displayName = "TableRow"
 
@@ -88,9 +78,7 @@ const TableHead = React.forwardRef<
       className
     )}
     {...props}
-  >
-    {children} {/* Render children explicitly inside the th */}
-  </th>
+  >{children}</th> // Render children directly inside the th without extra whitespace
 ))
 TableHead.displayName = "TableHead"
 
@@ -102,9 +90,7 @@ const TableCell = React.forwardRef<
     ref={ref}
     className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
     {...props}
-  >
-    {children} {/* Render children explicitly inside the td */}
-  </td>
+  >{children}</td> // Render children directly inside the td without extra whitespace
 ))
 TableCell.displayName = "TableCell"
 
@@ -116,9 +102,7 @@ const TableCaption = React.forwardRef<
     ref={ref}
     className={cn("mt-4 text-sm text-muted-foreground", className)}
     {...props}
-  >
-    {children} {/* Render children explicitly inside the caption */}
-  </caption>
+  >{children}</caption> // Render children directly inside the caption without extra whitespace
 ))
 TableCaption.displayName = "TableCaption"
 
