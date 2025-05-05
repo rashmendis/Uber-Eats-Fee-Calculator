@@ -58,8 +58,14 @@ This will start the development server, usually on `http://localhost:9002`. The 
 
 1.  **Open the App:** Navigate to the running application in your browser.
 2.  **Calculator:**
-    *   Use the "Price + Fee" tab to enter the item price before the fee and see the calculated total.
-    *   Use the "Price - Fee" tab to enter the total price (including the fee) and see the original item price.
+    *   **Price + Fee Tab:**
+        *   Enter the **item price before the fee** in the input field.
+        *   The calculator will show the calculated **Uber Fee** and the **Total Price (With Fee)**.
+        *   *Example:* If you enter `Rs. 1000.00` as the Item Price (and the fee is 30%), it will calculate a fee of `Rs. 300.00` and a total price of `Rs. 1300.00`.
+    *   **Price - Fee Tab:**
+        *   Enter the **total price (including the fee)** in the input field.
+        *   The calculator will show the calculated **Uber Fee** and the **Original Item Price (Before Fee)**.
+        *   *Example:* If you enter `Rs. 1300.00` as the Total Price (and the fee is 30%), it will calculate a fee of `Rs. 300.00` and an original price of `Rs. 1000.00`.
 3.  **Settings:**
     *   Click the gear icon (⚙️) in the top-right corner to open the Settings modal.
     *   Adjust the "Uber Fee Percentage" and "Currency Symbol".
@@ -77,6 +83,31 @@ The application uses the browser's `localStorage` to store data persistently on 
     *   **Format:** JSON string representing an object like `{"feePercentage": 0.3, "currencySymbol": "Rs."}`.
 *   **History Key:** `uberFeeCalculatorHistory`
     *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`with-fee` or `without-fee`), `input` value, `feePercentage` used, calculated `fee`, `result`, and `currencySymbol` used.
+
+```json
+[
+  {
+    "id": "unique_id_1",
+    "timestamp": 1678886400000,
+    "type": "with-fee",
+    "input": 1000,
+    "feePercentage": 0.30,
+    "fee": 300,
+    "result": 1300,
+    "currencySymbol": "Rs."
+  },
+  {
+    "id": "unique_id_2",
+    "timestamp": 1678896400000,
+    "type": "without-fee",
+    "input": 1300,
+    "feePercentage": 0.30,
+    "fee": 300,
+    "result": 1000,
+    "currencySymbol": "Rs."
+  }
+]
+```
 
 ## Available Scripts
 
