@@ -163,9 +163,10 @@ export default function FeeCalculator() {
     }
   };
 
+  // Calculation for 'Price + Fee' tab
   const { calculatedTotal, feeAmount: feeAmountForward } = useMemo(() => {
     const price = parseFloat(itemPrice);
-    if (!isNaN(price) && price > 0 && !isLoadingSettings) {
+    if (!isNaN(price) && price >= 0 && !isLoadingSettings) { // Allow 0 price
       const fee = price * feePercentage;
       const total = price + fee;
       return { calculatedTotal: total, feeAmount: fee };
@@ -173,42 +174,31 @@ export default function FeeCalculator() {
     return { calculatedTotal: null, feeAmount: null };
   }, [itemPrice, feePercentage, isLoadingSettings]);
 
-  const { calculatedOriginal, feeAmount: feeAmountReverse } = useMemo(() => {
+  // Calculation for 'Price - Fee' tab (Subtract fee calculated from total)
+  const { calculatedResultReverse, feeAmount: feeAmountReverse } = useMemo(() => {
     const total = parseFloat(totalPrice);
-    // Ensure feePercentage is not -1 to avoid division by zero if original price is calculated as total / (1 + feePercentage)
-    if (!isNaN(total) && total > 0 && feePercentage !== -1 && !isLoadingSettings) {
-      // --- Calculation Logic for 'Price - Fee' ---
-      // This calculation assumes the 'Total Price (With Fee)' was originally calculated by applying
-      // the 'feePercentage' to the 'Original Item Price'.
-      // Formula: Original Price = Total Price / (1 + Fee Percentage)
-      // This correctly reverses the calculation performed in the 'Price + Fee' tab.
-      // Example: If Item Price = 1000, Fee % = 30%, Total Price = 1300.
-      //          Then: Original Price = 1300 / (1 + 0.30) = 1300 / 1.30 = 1000.
-      // Fee = Total Price - Original Price = 1300 - 1000 = 300.
-      // ---
-      // Example for Total Price = 900, Fee % = 30%
-      // Original Price = 900 / (1 + 0.30) = 900 / 1.30 ≈ 692.31
-      // Fee = 900 - 692.31 ≈ 207.69
-      // ---
-       const denominator = 1 + feePercentage;
-        if (denominator > 0) { // Avoid division by zero or negative denominator if feePercentage is less than -1
-             const original = total / denominator;
-             // Ensure calculated original price is positive
-             if (original > 0) {
-                const fee = total - original;
-                return { calculatedOriginal: original, feeAmount: fee };
-            }
-        }
+    if (!isNaN(total) && total >= 0 && !isLoadingSettings) { // Allow 0 price
+      // Calculate fee based on the total price entered
+      const fee = total * feePercentage;
+      // Subtract this calculated fee from the total price
+      const result = total - fee;
+      // Ensure result is not negative
+      if (result >= 0) {
+          return { calculatedResultReverse: result, feeAmount: fee };
+      } else {
+         // Handle cases where fee is greater than total (e.g., 100% fee)
+         return { calculatedResultReverse: 0, feeAmount: fee };
+      }
     }
-    return { calculatedOriginal: null, feeAmount: null };
+    return { calculatedResultReverse: null, feeAmount: null };
   }, [totalPrice, feePercentage, isLoadingSettings]);
 
 
   const handleBlurWithFee = useCallback(() => {
     if (calculatedTotal !== null && feeAmountForward !== null && !isLoadingSettings) {
       const price = parseFloat(itemPrice);
-       // Only add to history if the input is a valid positive number
-       if (!isNaN(price) && price > 0) {
+       // Only add to history if the input is a valid non-negative number
+       if (!isNaN(price) && price >= 0) {
          addHistoryEntry({
            type: 'with-fee',
            input: price,
@@ -222,28 +212,28 @@ export default function FeeCalculator() {
   }, [itemPrice, calculatedTotal, feeAmountForward, feePercentage, currencySymbol, isLoadingSettings]);
 
   const handleBlurWithoutFee = useCallback(() => {
-    if (calculatedOriginal !== null && feeAmountReverse !== null && !isLoadingSettings) {
+    if (calculatedResultReverse !== null && feeAmountReverse !== null && !isLoadingSettings) {
        const total = parseFloat(totalPrice);
-        // Only add to history if the input is a valid positive number
-       if (!isNaN(total) && total > 0) {
+        // Only add to history if the input is a valid non-negative number
+       if (!isNaN(total) && total >= 0) {
          addHistoryEntry({
            type: 'without-fee',
            input: total,
            feePercentage: feePercentage, // Store the fee percentage used
            fee: feeAmountReverse,
-           result: calculatedOriginal,
+           result: calculatedResultReverse, // Store the result of subtraction
            currencySymbol: currencySymbol, // Store currency symbol used
          });
        }
     }
-  }, [totalPrice, calculatedOriginal, feeAmountReverse, feePercentage, currencySymbol, isLoadingSettings]);
+  }, [totalPrice, calculatedResultReverse, feeAmountReverse, feePercentage, currencySymbol, isLoadingSettings]);
 
 
   const formatCurrency = (value: string | number | null) => {
     if (value === null || value === undefined || value === '') return '-';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
-    // Handle negative zero explicitly if it occurs, though unlikely with current logic
+    // Handle negative zero explicitly if it occurs
     if (Object.is(numberValue, -0)) {
        return `${currencySymbol} 0.00`;
     }
@@ -321,7 +311,7 @@ export default function FeeCalculator() {
               <div className="space-y-2">
                 <Label htmlFor="total-price" className="flex items-center gap-2">
                    <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                  Total Price (With Fee)
+                  Total Price
                 </Label>
                 <Input
                   id="total-price"
@@ -332,7 +322,7 @@ export default function FeeCalculator() {
                   onChange={handleTotalPriceChange}
                   onBlur={handleBlurWithoutFee}
                   className="bg-secondary focus:ring-accent text-base"
-                  aria-label="Total Price With Fee"
+                  aria-label="Total Price"
                 />
               </div>
 
@@ -346,7 +336,7 @@ export default function FeeCalculator() {
                   <div className="flex justify-between items-center">
                     <Label className="flex items-center gap-2 font-medium text-sm">
                        <Percent className="h-4 w-4 text-accent" />
-                       Uber Fee ({displayFeePercentage}%)
+                       Calculated Fee ({displayFeePercentage}%)
                     </Label>
                     <span className={cn("font-semibold text-sm", feeAmountReverse !== null ? "text-foreground" : "text-muted-foreground")}>
                       {formatCurrency(feeAmountReverse)}
@@ -355,10 +345,10 @@ export default function FeeCalculator() {
                   <div className="flex justify-between items-center">
                    <Label className="flex items-center gap-2 font-medium text-sm">
                      <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                     Original Item Price (Before Fee)
+                     Price After Removing Fee
                    </Label>
                    <span className="text-lg font-bold text-accent">
-                      {formatCurrency(calculatedOriginal)}
+                      {formatCurrency(calculatedResultReverse)}
                    </span>
                  </div>
                </div>
