@@ -410,7 +410,7 @@ export default function FeeCalculator() {
 
               {/* Selling Price Calculator Tab */}
               <TabsContent value="selling-price" className="mt-6 space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Grid layout */}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Use items-end */}
                     {/* Desired Payout Input (Takes 2 columns) */}
                     <div className="space-y-2 sm:col-span-2">
                        <Label htmlFor="item-price-input" className="flex items-center gap-2">
@@ -567,7 +567,7 @@ export default function FeeCalculator() {
 
               {/* Payout Calculator Tab */}
               <TabsContent value="payout" className="mt-6 space-y-6">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Grid layout */}
+                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"> {/* Use items-end */}
                      {/* Selling Price Before Discount Input (Takes 2 columns) */}
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="selling-price-before-discount-input" className="flex items-center gap-2">
@@ -730,4 +730,3 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
-
