@@ -15,6 +15,12 @@ This is a simple Next.js application designed to calculate Uber Eats prices, fac
 *   **Client-Side Storage:** Settings and history are stored locally in your browser's `localStorage`.
 *   **Responsive Design:** Adapts to different screen sizes.
 
+## Live Preview
+
+You can try a live preview of the application here: [Live Preview](https://9000-idx-studio-1746447866480.cluster-fdkw7vjj7bgguspe3fbbc25tra.cloudworkstations.dev)
+
+*(Note: This link might be temporary depending on the hosting environment.)*
+
 ## Architecture
 
 This application is built entirely on the **client-side** using Next.js (App Router) and React.
