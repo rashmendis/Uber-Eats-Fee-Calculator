@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DollarSign, Percent, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Currency, Percent, ArrowRight, ArrowLeft } from 'lucide-react'; // Use Currency icon
 import { cn } from "@/lib/utils";
 
 const UBER_FEE_PERCENTAGE = 0.30; // 30%
@@ -54,14 +54,15 @@ export default function FeeCalculator() {
     if (value === null || value === undefined || value === '') return '-';
     const numberValue = typeof value === 'string' ? parseFloat(value) : value;
     if (isNaN(numberValue)) return '-';
-    return `$${numberValue.toFixed(2)}`;
+    // Format for LKR
+    return `LKR ${numberValue.toFixed(2)}`;
   };
 
   return (
     <Card className="w-full max-w-md shadow-lg">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
-        <CardDescription>Calculate prices with or without the 30% fee.</CardDescription>
+        <CardDescription>Calculate prices in LKR with or without the 30% fee.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="with-fee" className="w-full">
@@ -72,14 +73,14 @@ export default function FeeCalculator() {
           <TabsContent value="with-fee" className="mt-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="item-price" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <Currency className="h-4 w-4 text-muted-foreground" />
                 Item Price (Before Fee)
               </Label>
               <Input
                 id="item-price"
                 type="text" // Use text to allow decimal input handling
                 inputMode="decimal" // Hint for mobile keyboards
-                placeholder="e.g., 10.00"
+                placeholder="e.g., 1000.00" // Updated placeholder
                 value={itemPrice}
                 onChange={handleItemPriceChange}
                 className="bg-secondary focus:ring-accent"
@@ -102,7 +103,7 @@ export default function FeeCalculator() {
                </div>
                <div className="flex justify-between items-center">
                 <Label className="flex items-center gap-2 font-medium">
-                  <DollarSign className="h-4 w-4 text-accent" />
+                  <Currency className="h-4 w-4 text-accent" />
                   Total Price (With Fee)
                 </Label>
                 <span className="text-lg font-bold text-accent">
@@ -114,14 +115,14 @@ export default function FeeCalculator() {
           <TabsContent value="without-fee" className="mt-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="total-price" className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <Currency className="h-4 w-4 text-muted-foreground" />
                 Total Price (With Fee)
               </Label>
               <Input
                 id="total-price"
                 type="text"
                 inputMode="decimal"
-                placeholder="e.g., 13.00"
+                placeholder="e.g., 1300.00" // Updated placeholder
                 value={totalPrice}
                 onChange={handleTotalPriceChange}
                 className="bg-secondary focus:ring-accent"
@@ -144,7 +145,7 @@ export default function FeeCalculator() {
                 </div>
                 <div className="flex justify-between items-center">
                  <Label className="flex items-center gap-2 font-medium">
-                   <DollarSign className="h-4 w-4 text-accent" />
+                   <Currency className="h-4 w-4 text-accent" />
                    Original Item Price (Before Fee)
                  </Label>
                  <span className="text-lg font-bold text-accent">
