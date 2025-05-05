@@ -8,4 +8,5 @@ export interface HistoryEntry {
   feePercentage: number; // Added fee percentage used for calculation
   fee: number;
   result: number;
+  currencySymbol: string; // Added currency symbol used for calculation
 }
