@@ -21,7 +21,7 @@ export default function Home() {
       <FeeCalculator />
 
       {/* History Accordion Below Calculator */}
-      <div className="w-full max-w-md mt-6">
+      <div className="w-full max-w-lg mt-6"> {/* Changed max-w-md to max-w-lg */}
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="history">
             <AccordionTrigger className="text-sm font-medium hover:no-underline justify-center data-[state=closed]:bg-card data-[state=closed]:border data-[state=closed]:rounded-lg data-[state=closed]:shadow-sm data-[state=open]:rounded-t-lg data-[state=open]:border-x data-[state=open]:border-t data-[state=open]:bg-card data-[state=open]:shadow-sm px-4 py-3">

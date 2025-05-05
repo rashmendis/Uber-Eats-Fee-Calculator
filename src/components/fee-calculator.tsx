@@ -194,7 +194,7 @@ export default function FeeCalculator() {
   const displayFeePercentage = (feePercentage * 100).toFixed(1); // Display with one decimal place
 
   return (
-    <Card className="w-full max-w-md shadow-lg">
+    <Card className="w-full max-w-lg shadow-lg"> {/* Changed max-w-md to max-w-lg */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
         <CardDescription>
