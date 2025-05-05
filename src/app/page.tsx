@@ -1,14 +1,16 @@
 
 import FeeCalculator from '@/components/fee-calculator';
 import SettingsModal from '@/components/settings-modal'; // Corrected import path if needed
-import HistoryView from '@/components/history-view';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { History } from 'lucide-react';
+// HistoryView is no longer imported here, it's embedded in FeeCalculator tabs
+// import HistoryView from '@/components/history-view';
+// Accordion is no longer needed here for history
+// import {
+//   Accordion,
+//   AccordionContent,
+//   AccordionItem,
+//   AccordionTrigger,
+// } from "@/components/ui/accordion";
+// import { History } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -19,13 +21,15 @@ export default function Home() {
       </div>
 
       {/* Main Calculator Component - Responsive Width */}
-      <div className="w-full max-w-xl lg:max-w-[60%] mb-6"> {/* Adjusted width: full on small, max-xl medium, 60% large */}
+      {/* Increased bottom margin to accommodate embedded history */}
+      <div className="w-full max-w-xl lg:max-w-[60%] mb-12"> {/* Increased mb */}
          <FeeCalculator />
       </div>
 
 
-      {/* History Accordion Below Calculator - Responsive Width */}
-      <div className="w-full max-w-xl lg:max-w-[60%]"> {/* Adjusted width: full on small, max-xl medium, 60% large */}
+      {/* History Accordion Below Calculator - REMOVED */}
+      {/*
+      <div className="w-full max-w-xl lg:max-w-[60%]">
         <Accordion type="single" collapsible className="w-full">
           <AccordionItem value="history">
             <AccordionTrigger className="text-sm font-medium hover:no-underline justify-center data-[state=closed]:bg-card data-[state=closed]:border data-[state=closed]:rounded-lg data-[state=closed]:shadow-sm data-[state=open]:rounded-t-lg data-[state=open]:border-x data-[state=open]:border-t data-[state=open]:bg-card data-[state=open]:shadow-sm px-4 py-3">
@@ -34,13 +38,13 @@ export default function Home() {
                   <span>View Calculation History</span>
                </div>
             </AccordionTrigger>
-            <AccordionContent className="bg-card border-x border-b rounded-b-lg shadow-sm"> {/* Keep padding managed by children */}
-              {/* HistoryView component will be rendered inside the content */}
+            <AccordionContent className="bg-card border-x border-b rounded-b-lg shadow-sm">
               <HistoryView />
             </AccordionContent>
           </AccordionItem>
         </Accordion>
       </div>
+      */}
     </main>
   );
 }

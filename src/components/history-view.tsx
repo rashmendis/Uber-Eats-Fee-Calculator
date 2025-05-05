@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { CardHeader } from "@/components/ui/card"; // Only CardHeader is needed now
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,8 +18,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"; // Import Tooltip components
 
-export default function HistoryView() {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+// Props for the component, including the filter type
+interface HistoryViewProps {
+  filterType: HistoryEntry['type'] | 'all'; // 'selling-price', 'payout', or 'all'
+}
+
+
+export default function HistoryView({ filterType }: HistoryViewProps) {
+  const [allHistory, setAllHistory] = useState<HistoryEntry[]>([]);
   const [isClient, setIsClient] = useState(false);
 
   // Function to load history from localStorage
@@ -66,7 +72,7 @@ export default function HistoryView() {
              }
           });
 
-          setHistory(validHistory);
+          setAllHistory(validHistory);
           // Save back if any entries were corrected
           if (JSON.stringify(validHistory) !== storedHistory) {
             localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(validHistory));
@@ -74,15 +80,15 @@ export default function HistoryView() {
         } else {
           console.warn("Invalid history format found in localStorage. Clearing.");
           localStorage.removeItem(HISTORY_STORAGE_KEY);
-          setHistory([]); // Clear state as well
+          setAllHistory([]); // Clear state as well
         }
       } else {
-         setHistory([]); // No history found
+         setAllHistory([]); // No history found
       }
     } catch (error) {
       console.error("Failed to load or parse history from localStorage:", error);
       localStorage.removeItem(HISTORY_STORAGE_KEY);
-      setHistory([]); // Clear state on error
+      setAllHistory([]); // Clear state on error
     }
   };
 
@@ -105,9 +111,18 @@ export default function HistoryView() {
     };
   }, []); // Empty dependency array ensures this runs once on mount
 
-  // Function to clear history
+  // Filter history based on the prop
+  const filteredHistory = useMemo(() => {
+    if (filterType === 'all') {
+      return allHistory;
+    }
+    return allHistory.filter(entry => entry.type === filterType);
+  }, [allHistory, filterType]);
+
+
+  // Function to clear history (clears ALL history regardless of filter)
   const clearHistory = () => {
-    setHistory([]);
+    setAllHistory([]);
     try {
       localStorage.removeItem(HISTORY_STORAGE_KEY);
       // Dispatch event to notify other potential listeners (though unlikely needed for simple clear)
@@ -149,30 +164,36 @@ export default function HistoryView() {
 
   return (
     <TooltipProvider> {/* Wrap with TooltipProvider */}
-      <div className="w-full"> {/* Removed Card wrapper */}
-        <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between">
+      {/* Container for the history table and clear button */}
+      <div className="w-full bg-card border rounded-lg shadow-sm">
+        {/* Header with Clear Button */}
+        <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between border-b">
             <div className="flex-1"></div> {/* Spacer */}
-            {isClient && history.length > 0 && (
+            {/* Show clear button only if there's history and it's client-side */}
+            {isClient && allHistory.length > 0 && (
               <Button variant="ghost" size="sm" onClick={clearHistory} aria-label="Clear history" className="text-destructive hover:text-destructive">
                 <Trash2 className="h-4 w-4 mr-1" />
-                Clear
+                Clear All History
               </Button>
             )}
-             {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>} {/* Placeholder to prevent layout shift */}
+             {/* Placeholder to prevent layout shift when button isn't rendered */}
+             {(!isClient || allHistory.length === 0) && <div className="h-9 w-[150px]"></div>}
         </CardHeader>
-        <div className="px-0 pb-2 pt-0"> {/* Removed CardContent */}
+
+        {/* Table container */}
+        <div className="px-0 pb-2 pt-0">
           {!isClient ? (
             <div className="space-y-2 p-4">
               <Skeleton className="h-10 w-full rounded-md" />
               <Skeleton className="h-8 w-full rounded-md" />
               <Skeleton className="h-8 w-full rounded-md" />
             </div>
-          ) : history.length === 0 ? (
+          ) : filteredHistory.length === 0 ? (
             <div className="text-center text-muted-foreground py-8 px-4">
-              No history yet. Make some calculations!
+              No {filterType !== 'all' ? `${filterType.replace('-', ' ')}` : ''} history yet.
             </div>
           ) : (
-             <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border rounded-lg mx-4 mb-4 relative"> {/* Container for sticky header */}
+             <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border-t rounded-b-lg mx-0 mb-0 relative"> {/* Container for sticky header, adjusted border/margins */}
               <Table className="w-full border-collapse"> {/* Use border-collapse */}
                 {/* Sticky header */}
                 <TableHeader className="sticky top-0 z-10 bg-card border-b">
@@ -181,7 +202,7 @@ export default function HistoryView() {
                      {/* Reduced padding in TableHead via ui/table.tsx */}
                      <TableHead className="whitespace-nowrap border-r">Timestamp</TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        Input
+                        {getInputLabel(filterType === 'all' ? 'selling-price' : filterType)} {/* Dynamic label */}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -194,7 +215,7 @@ export default function HistoryView() {
                      <TableHead className="text-right whitespace-nowrap border-r">Fee</TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">Offer / Discount</TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        Result
+                        {getResultLabel(filterType === 'all' ? 'selling-price' : filterType)} {/* Dynamic label */}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -205,7 +226,7 @@ export default function HistoryView() {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap"> {/* No border-r */}
-                        Customer Price
+                        {getFinalPriceLabel()}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -218,7 +239,7 @@ export default function HistoryView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {history.map((entry) => (
+                  {filteredHistory.map((entry) => (
                     <TableRow key={entry.id} className="border-b last:border-b-0"> {/* Ensure border-b */}
                       {/* Consistent padding and border */}
                       {/* Reduced padding in TableCell via ui/table.tsx */}

@@ -7,7 +7,7 @@ export interface HistoryEntry {
   /**
    * 'selling-price': Calculates the Selling Price (Before Discount) based on Desired Payout.
    * 'payout': Calculates the Total Payout based on Selling Price (Before Discount) and offers for one or more items.
-   * NOTE: Payout calculation history is currently only saved for 'selling-price' type calculations.
+   * NOTE: Payout calculation history is not currently saved.
    */
   type: 'selling-price' | 'payout';
   /**
@@ -42,5 +42,12 @@ export interface HistoryEntry {
    */
   finalPrice: number;
   currencySymbol: string;
+  /**
+   * Optional array of items included in a 'payout' calculation.
+   * Not currently used as payout history is not saved.
+   */
+  items?: Array<{
+      sellingPrice: number;
+      offerPercentage: number;
+  }>;
 }
-

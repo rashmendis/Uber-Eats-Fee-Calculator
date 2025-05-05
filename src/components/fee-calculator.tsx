@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select components
+import HistoryView from '@/components/history-view'; // Import HistoryView
 
 // Interface for a single item in the Payout Calculator
 interface PayoutItem {
@@ -32,6 +33,9 @@ interface PayoutItem {
 const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
   // Ensure this code only runs on the client
   if (typeof window === 'undefined') return;
+
+  // Only save 'selling-price' type for now
+  if (entry.type !== 'selling-price') return;
 
   try {
     const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
@@ -489,7 +493,7 @@ export default function FeeCalculator() {
      setHasCalculatedPayout(false);
    };
 
-  // Calculate and add to history on button click for 'selling-price' tab
+  // Calculate and potentially add to history on button click for 'selling-price' tab
   const handleCalculateSellingPrice = useCallback(() => {
     const results = calculateSellingPriceLogic(desiredPayoutInput, spCalcDiscountPercentage, feePercentage);
     setSellingPriceCalcResults(results); // Update display state
@@ -519,6 +523,8 @@ export default function FeeCalculator() {
           discountAmount: results.discountAmount ?? 0,
           finalPrice: results.customerPriceAfterDiscount, // Customer Pays
           currencySymbol: currencySymbol,
+          // Payout calculations don't have a single 'items' input in the same way
+          // So we might omit or use a different structure if saving payout history
         });
       }
     }
@@ -540,12 +546,37 @@ export default function FeeCalculator() {
      // History saving is disabled for multi-item payout calculations for simplicity
      // You could potentially save a summary or represent the items differently if needed.
 
+     // Example structure if you wanted to save Payout history (not currently implemented)
+     /*
+      if (results.totalPayoutSellerReceives !== null && !isLoadingSettings) {
+         addHistoryEntry({
+            type: 'payout',
+            // Input for payout is complex (list of items) - might need a different structure
+            // For simplicity, maybe save the total SP before discount or just the result?
+            input: payoutItems.reduce((sum, item) => sum + (parseFloat(item.sellingPrice) || 0), 0), // Example: sum of SPs
+            feePercentage: feePercentage,
+            // Discount is per-item, maybe save average or total?
+            discountPercentage: results.totalDiscountAmount !== null && results.subtotalCustomerPrice !== null && results.subtotalCustomerPrice > 0 ? results.totalDiscountAmount / (results.subtotalCustomerPrice + results.totalDiscountAmount) : 0, // Approximate overall discount %
+            fee: results.totalFeeAmount ?? 0,
+            result: results.totalPayoutSellerReceives, // Total Payout
+            discountAmount: results.totalDiscountAmount ?? 0,
+            finalPrice: results.subtotalCustomerPrice ?? 0, // Subtotal Customer Pays
+            currencySymbol: currencySymbol,
+            items: payoutItems.map(p => ({ // Could store item details
+                sellingPrice: parseFloat(p.sellingPrice) || 0,
+                offerPercentage: getPayoutItemDiscountPercentage(p)
+            }))
+         });
+      }
+     */
+
   }, [
     payoutItems,
     feePercentage,
-    // currencySymbol,
+    // currencySymbol, // Needed if saving history
     isLoadingSettings,
     calculatePayoutLogic, // Dependency
+    // getPayoutItemDiscountPercentage, // Needed if saving history with item details
   ]);
 
   // --- Auto-Recalculation Effect ---
@@ -582,7 +613,6 @@ export default function FeeCalculator() {
     calculatePayoutLogic, // Calculation function dependency
     sellingPriceCalcResults, // Current results to prevent loop (SP tab)
     payoutCalcResults, // Current results to prevent loop (Payout tab)
-    // Remove handlePayoutItemChange from dependency array to prevent loops
 ]);
 
 
@@ -818,8 +848,12 @@ export default function FeeCalculator() {
                          {formatCurrency(sellingPriceCalcResults?.actualPayout ?? null)}
                        </span>
                      </div>
+                  </div>
 
-
+                  {/* History Section for Selling Price */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-3 text-center">Calculation History</h3>
+                    <HistoryView filterType="selling-price" />
                   </div>
               </TabsContent>
 
@@ -999,6 +1033,17 @@ export default function FeeCalculator() {
                      </span>
                    </div>
 
+                 </div>
+                  {/* History Section for Payout */}
+                  {/* History for payout is currently disabled */}
+                 {/*
+                 <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-3 text-center">Calculation History</h3>
+                    <HistoryView filterType="payout" />
+                 </div>
+                 */}
+                  <div className="mt-8 text-center text-muted-foreground">
+                    <p>(Payout history is not currently saved)</p>
                  </div>
               </TabsContent>
             </Tabs>
