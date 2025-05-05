@@ -25,7 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {/*
+        Adding suppressHydrationWarning to the body tag can help mitigate hydration errors
+        caused by browser extensions (like Grammarly) that inject scripts or modify attributes.
+        While the root <html> tag already has it, extensions sometimes specifically target the <body>.
+      */}
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
         {children}
         <Toaster /> {/* Add Toaster here */}
       </body>
