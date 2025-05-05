@@ -115,59 +115,57 @@ export default function HistoryView() {
 
 
   return (
-    <div className="w-full"> {/* Removed Card wrapper, as parent Accordion provides structure */}
-      <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between"> {/* Use flex-row */}
-          {/* Empty div to push button to the right */}
-          <div className="flex-1"></div>
+    <div className="w-full"> {/* Removed Card wrapper */}
+      <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between">
+          <div className="flex-1"></div> {/* Spacer */}
           {isClient && history.length > 0 && (
             <Button variant="ghost" size="sm" onClick={clearHistory} aria-label="Clear history" className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4 mr-1" />
               Clear
             </Button>
           )}
-           {/* Placeholder keeps layout consistent when button isn't rendered */}
-           {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>}
+           {(!isClient || history.length === 0) && <div className="h-9 w-[76px]"></div>} {/* Placeholder */}
       </CardHeader>
-      <CardContent className="px-0 pb-2 pt-0"> {/* Removed horizontal padding initially */}
+      <CardContent className="px-0 pb-2 pt-0">
         {!isClient ? (
-          <div className="space-y-2 p-4"> {/* Add padding back for skeleton */}
+          <div className="space-y-2 p-4">
             <Skeleton className="h-10 w-full rounded-md" />
             <Skeleton className="h-8 w-full rounded-md" />
             <Skeleton className="h-8 w-full rounded-md" />
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8 px-4"> {/* Keep padding for empty state */}
+          <div className="text-center text-muted-foreground py-8 px-4">
             No history yet. Make some calculations!
           </div>
         ) : (
-          <ScrollArea className="h-[300px] sm:h-[400px] w-full px-4"> {/* Added horizontal padding here */}
-            <Table className="min-w-full relative"> {/* Add relative positioning for sticky header context */}
-              {/* Apply sticky positioning, background, and z-index to the TableHeader */}
-              <TableHeader className="sticky top-0 bg-card z-10">
-                <TableRow>
-                   {/* Removed fixed width classes, added consistent padding */}
-                   <TableHead className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Timestamp</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Input</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee (%)</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Fee</TableHead>
-                   <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Result</TableHead>
+          // Scrollable container with max-height and border
+          <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border rounded-lg mx-4 mb-4 relative">
+            <Table className="w-full border-collapse">
+              {/* Sticky header */}
+              <TableHeader className="sticky top-0 z-10 bg-card border-b">
+                <TableRow className="hover:bg-transparent"> {/* Prevent hover effect on header row */}
+                   <TableHead className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Timestamp</TableHead>
+                   <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Input</TableHead>
+                   <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
+                   <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
+                   <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((entry) => (
-                  <TableRow key={entry.id}>
-                    <TableCell className="text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3 truncate">
+                  <TableRow key={entry.id} className="border-b last:border-b-0">
+                    <TableCell className="text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 truncate border-r">
                       {format(new Date(entry.timestamp), 'PPp')}
                     </TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
+                    <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                         {formatCurrency(entry.input, entry.currencySymbol)}
                     </TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">
+                    <TableCell className="text-right text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">
                       {formatPercentage(entry.feePercentage)}
                     </TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
-                    <TableCell className="text-right text-xs sm:text-sm font-medium px-2 py-2 sm:px-4 sm:py-3">
+                    <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
+                    <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3">
                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getResultLabel(entry.type)}</span>
                         {formatCurrency(entry.result, entry.currencySymbol)}
                     </TableCell>
@@ -175,10 +173,9 @@ export default function HistoryView() {
                 ))}
               </TableBody>
             </Table>
-          </ScrollArea>
+          </div>
         )}
       </CardContent>
     </div>
   );
 }
-
