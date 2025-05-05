@@ -97,7 +97,7 @@ export default function HistoryView() {
 
   return (
     <div className="w-full"> {/* Removed Card wrapper, as parent Accordion provides structure */}
-      <CardHeader className="pt-4 pb-2"> {/* Adjusted padding */}
+      <CardHeader className="pt-4 pb-2 px-4"> {/* Adjusted padding */}
         <div className="flex items-center justify-between">
            {/* Title moved within AccordionTrigger */}
           <div className="flex-1"></div> {/* Spacer */}
@@ -126,32 +126,32 @@ export default function HistoryView() {
         ) : (
           // Removed border and rounded-md as Accordion provides it
           <ScrollArea className="h-[300px] sm:h-[400px]">
-            <Table>
+            <Table className="table-fixed sm:table-auto"> {/* Use table-fixed for small screens, auto for larger */}
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[130px] sm:w-[160px] px-3 sm:px-4">Timestamp</TableHead>
-                  <TableHead className="px-3 sm:px-4">Type</TableHead>
-                  <TableHead className="text-right px-3 sm:px-4">Input</TableHead>
-                  <TableHead className="text-right w-[60px] px-3 sm:px-4">Fee (%)</TableHead>
-                  <TableHead className="text-right px-3 sm:px-4">Fee</TableHead>
-                  <TableHead className="text-right px-3 sm:px-4">Result</TableHead>
+                  <TableHead className="px-2 py-2 sm:px-4 sm:py-3 w-[100px] sm:w-auto">Timestamp</TableHead>
+                  <TableHead className="px-2 py-2 sm:px-4 sm:py-3">Type</TableHead>
+                  <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3">Input</TableHead>
+                  <TableHead className="text-right px-1 py-2 sm:px-4 sm:py-3 w-[55px] sm:w-auto">Fee(%)</TableHead>
+                  <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3">Fee</TableHead>
+                  <TableHead className="text-right px-2 py-2 sm:px-4 sm:py-3">Result</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="text-xs text-muted-foreground px-3 sm:px-4">
-                      {format(new Date(entry.timestamp), 'PPp')}
+                    <TableCell className="text-xs text-muted-foreground px-2 py-2 sm:px-4 sm:py-3 truncate">
+                      {format(new Date(entry.timestamp), 'PP pp')} {/* Changed format slightly */}
                     </TableCell>
-                    <TableCell className="text-sm px-3 sm:px-4">
-                      {entry.type === 'with-fee' ? 'Price + Fee' : 'Price - Fee'}
+                    <TableCell className="text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">
+                      {entry.type === 'with-fee' ? 'Calc Total' : 'Calc Base'} {/* Shorter labels */}
                     </TableCell>
-                    <TableCell className="text-right px-3 sm:px-4">{formatCurrency(entry.input)}</TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground px-3 sm:px-4">
+                    <TableCell className="text-right text-xs sm:text-sm px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.input)}</TableCell>
+                    <TableCell className="text-right text-xs text-muted-foreground px-1 py-2 sm:px-4 sm:py-3">
                       {formatPercentage(entry.feePercentage)}
                     </TableCell>
-                    <TableCell className="text-right text-muted-foreground px-3 sm:px-4">{formatCurrency(entry.fee)}</TableCell>
-                    <TableCell className="text-right font-medium px-3 sm:px-4">{formatCurrency(entry.result)}</TableCell>
+                    <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.fee)}</TableCell>
+                    <TableCell className="text-right text-xs sm:text-sm font-medium px-2 py-2 sm:px-4 sm:py-3">{formatCurrency(entry.result)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
