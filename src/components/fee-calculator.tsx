@@ -232,7 +232,18 @@ export default function FeeCalculator() {
       // Customer Price = SP_Before_Discount * (1 - Discount)
       // Actual Payout = (SP_Before_Discount * (1 - Discount)) * (1 - Fee)
       // Desired Payout = (SP_Before_Discount * (1 - Discount)) * (1 - Fee)
-      // SP_Before_Discount = Desired Payout / ((1 - Discount) * (1 - Fee))
+      // SP_Before_Discount = Desired Payout / ((1 - Discount) * (1 - Fee)) // ORIGINAL INCORRECT WAY - This assumed desired payout *included* the discount impact
+      //
+      // CORRECT LOGIC:
+      // We want Desired Payout to be the FINAL amount after discount AND fee.
+      // Let SP_BD = Selling Price Before Discount
+      // Price_AD = Price After Discount = SP_BD * (1 - discount)
+      // Fee = Price_AD * fee
+      // Actual Payout = Price_AD - Fee = Price_AD * (1 - fee)
+      // Actual Payout = (SP_BD * (1 - discount)) * (1 - fee)
+      //
+      // We are GIVEN the Desired Payout (X). We need to FIND SP_BD.
+      // SP_BD = Desired Payout / ((1 - discount) * (1 - fee)) --- This is still correct for finding the initial SP_BD based on the *final* desired payout.
 
       // Denominator for SP calculation
       const denominator = (1 - discount) * (1 - fee);
@@ -781,9 +792,9 @@ export default function FeeCalculator() {
                         className="bg-secondary focus:ring-accent text-base"
                         aria-label="Selling Price (Before Discount)"
                       />
-                       <p className="text-xs text-muted-foreground">
+                       {/* <p className="text-xs text-muted-foreground">
                          Enter the price listed on the platform *before* any discount is applied.
-                       </p>
+                       </p> */}
                     </div>
 
                     {/* Offer Dropdown (Takes 1 column) */}
@@ -927,5 +938,3 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
-
-    
