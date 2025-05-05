@@ -142,7 +142,8 @@ export default function HistoryView() {
         ) : (
           <ScrollArea className="h-[300px] sm:h-[400px] w-full px-4"> {/* Added horizontal padding here */}
             <Table className="min-w-full relative"> {/* Add relative positioning for sticky header context */}
-              <TableHeader className="sticky top-0 bg-card z-10"> {/* Make header sticky, add background and z-index */}
+              {/* Apply sticky positioning, background, and z-index to the TableHeader */}
+              <TableHeader className="sticky top-0 bg-card z-10">
                 <TableRow>
                    {/* Removed fixed width classes, added consistent padding */}
                    <TableHead className="px-2 py-2 sm:px-4 sm:py-3 whitespace-nowrap">Timestamp</TableHead>
@@ -180,3 +181,4 @@ export default function HistoryView() {
     </div>
   );
 }
+
