@@ -45,9 +45,10 @@ export default function HistoryView() {
             // For 'selling-price' type, result is SP Before Discount
             // For 'payout' type, input is SP Before Discount
             const spBeforeDiscount = entry.type === 'selling-price' ? entry.result : entry.input;
+            const discountPercentage = typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0; // Ensure discount exists
 
-            if (typeof spBeforeDiscount === 'number' && typeof entry.discountPercentage === 'number') {
-              defaultFinalPrice = spBeforeDiscount * (1 - entry.discountPercentage);
+            if (typeof spBeforeDiscount === 'number') {
+              defaultFinalPrice = spBeforeDiscount * (1 - discountPercentage);
             } else {
                // Fallback if data is somehow inconsistent
                defaultFinalPrice = entry.result; // Less ideal fallback
@@ -58,7 +59,7 @@ export default function HistoryView() {
                 ...entry,
                 currencySymbol: typeof entry.currencySymbol === 'string' && entry.currencySymbol.trim().length > 0 ? entry.currencySymbol.trim() : DEFAULT_CURRENCY_SYMBOL,
                 // Add defaults for potentially missing discount fields for backwards compatibility
-                discountPercentage: typeof entry.discountPercentage === 'number' ? entry.discountPercentage : 0,
+                discountPercentage: discountPercentage,
                 discountAmount: typeof entry.discountAmount === 'number' ? entry.discountAmount : 0,
                 // Use calculated defaultFinalPrice if finalPrice is missing or invalid
                 finalPrice: typeof entry.finalPrice === 'number' && isFinite(entry.finalPrice) ? entry.finalPrice : defaultFinalPrice
@@ -254,3 +255,4 @@ export default function HistoryView() {
   );
 }
 
+    

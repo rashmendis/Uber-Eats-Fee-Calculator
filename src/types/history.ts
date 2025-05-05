@@ -45,3 +45,5 @@ export interface HistoryEntry {
   currencySymbol: string;
 }
 
+
+    

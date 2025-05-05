@@ -7,7 +7,7 @@ This is a simple Next.js application designed to calculate Uber Eats prices, fac
 
 ## Features
 
-*   **Calculate Selling Price (Based on Desired Price + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`) and the **Discount Amount**.
+*   **Calculate Selling Price (Based on Desired Payout + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`) and the **Discount Amount**.
 *   **Calculate Payout (Selling Price - Offer - Fee):** Enter a **Selling Price (Before Discount)** (the price listed on the platform *before* any offer/discount). Optionally, select the **Offer Percentage** (0-100) offered to the customer. The calculator first calculates the **Discount Given** (`Selling Price (Before Discount) * Offer Percentage`) and the **Final Price (Customer Pays)** (`Selling Price (Before Discount) * (1 - Offer Percentage)`). Then, it calculates the **Uber Fee** based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`). Finally, it determines the **Payout (Seller Receives)** (`Final Price - Uber Fee`).
 *   **Configurable Settings:**
     *   Set the fee percentage (defaults to 30%).
@@ -143,3 +143,5 @@ The application uses the browser's `localStorage` to store data persistently on 
 *   `npm run start`: Starts the production server (requires running `npm run build` first).
 *   `npm run lint`: Runs the Next.js linter.
 *   `npm run typecheck`: Checks TypeScript types.
+
+    
