@@ -30,7 +30,7 @@ export default function Home() {
                   <span>View Calculation History</span>
                </div>
             </AccordionTrigger>
-            <AccordionContent className="bg-card border-x border-b rounded-b-lg shadow-sm p-0">
+            <AccordionContent className="bg-card border-x border-b rounded-b-lg shadow-sm"> {/* Removed p-0 */}
               {/* HistoryView component will be rendered inside the content */}
               <HistoryView />
             </AccordionContent>

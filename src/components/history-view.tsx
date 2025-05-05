@@ -112,7 +112,7 @@ export default function HistoryView() {
         {/* Description can be optional or integrated elsewhere */}
         {/* <CardDescription>Review your past calculations.</CardDescription> */}
       </CardHeader>
-      <CardContent className="p-0"> {/* Remove padding for seamless integration */}
+      <CardContent className="px-0 pb-2 pt-0"> {/* Adjusted padding: removed horizontal padding, added bottom padding */}
         {!isClient ? (
           <div className="space-y-2 p-4"> {/* Add padding for skeleton */}
             <Skeleton className="h-10 w-full rounded-md" />
@@ -120,12 +120,12 @@ export default function HistoryView() {
             <Skeleton className="h-8 w-full rounded-md" />
           </div>
         ) : history.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8 px-4">
+          <div className="text-center text-muted-foreground py-8 px-4"> {/* Keep padding for empty state */}
             No history yet. Make some calculations!
           </div>
         ) : (
           // Removed border and rounded-md as Accordion provides it
-          <ScrollArea className="h-[300px] sm:h-[400px]">
+          <ScrollArea className="h-[300px] sm:h-[400px] px-4"> {/* Added horizontal padding to ScrollArea */}
             <Table className="table-fixed sm:table-auto"> {/* Use table-fixed for small screens, auto for larger */}
               <TableHeader>
                 <TableRow>
