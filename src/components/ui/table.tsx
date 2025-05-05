@@ -63,15 +63,9 @@ TableFooter.displayName = "TableFooter"
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...props }, ref) => ( // Explicitly destructure children
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...props}>{children}</tr> // Place children immediately after the opening tag
-))
+>(({ className, children, ...props }, ref) => (
+  <tr ref={ref} className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...props}>{children}</tr>
+));
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
@@ -81,7 +75,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0",
+      "h-12 px-3 py-2 sm:px-4 sm:py-3 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 whitespace-nowrap border-r last:border-r-0", // Added padding, border, whitespace
       className
     )}
     {...props}>{children}</th> // Place children immediately after the opening tag
@@ -94,7 +88,7 @@ const TableCell = React.forwardRef<
 >(({ className, children, ...props }, ref) => ( // Explicitly destructure children
   <td
     ref={ref}
-    className={cn("p-4 align-middle [&:has([role=checkbox])]:pr-0", className)}
+    className={cn("px-3 py-2 sm:px-4 sm:py-3 align-middle [&:has([role=checkbox])]:pr-0 border-r last:border-r-0", className)} // Added padding and border
     {...props}>{children}</td> // Place children immediately after the opening tag
 ))
 TableCell.displayName = "TableCell"
@@ -120,3 +114,4 @@ export {
   TableCell,
   TableCaption,
 }
+
