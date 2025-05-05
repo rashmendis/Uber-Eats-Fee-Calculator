@@ -20,7 +20,7 @@ import {
 
 // Props for the component, including the filter type
 interface HistoryViewProps {
-  filterType: HistoryEntry['type'] | 'all'; // 'selling-price', 'payout', or 'all'
+  filterType: 'selling-price' | 'payout'; // Only these two types are used now
 }
 
 
@@ -119,22 +119,35 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
 
   // Filter history based on the prop
   const filteredHistory = useMemo(() => {
-    if (filterType === 'all') {
-      return allHistory;
-    }
     return allHistory.filter(entry => entry.type === filterType);
   }, [allHistory, filterType]);
 
 
-  // Function to clear history (clears ALL history regardless of filter)
-  const clearHistory = () => {
-    setAllHistory([]);
+  // Function to clear history for the SPECIFIC filterType
+  const clearFilteredHistory = () => {
+    if (typeof window === 'undefined') return;
+
     try {
-      localStorage.removeItem(HISTORY_STORAGE_KEY);
-      // Dispatch event to notify other potential listeners (though unlikely needed for simple clear)
-      window.dispatchEvent(new StorageEvent('storage', { key: HISTORY_STORAGE_KEY, newValue: null, storageArea: localStorage }));
+        const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+        let currentHistory: HistoryEntry[] = storedHistory ? JSON.parse(storedHistory) : [];
+
+        // Filter out entries matching the current filterType
+        const updatedHistory = currentHistory.filter(entry => entry.type !== filterType);
+
+        // Update localStorage
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
+
+        // Update local state to reflect the change
+        setAllHistory(updatedHistory); // This will trigger re-render and update filteredHistory
+
+        // Dispatch event to notify other potential listeners
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: HISTORY_STORAGE_KEY,
+          newValue: JSON.stringify(updatedHistory),
+          storageArea: localStorage
+        }));
     } catch (error) {
-      console.error("Failed to clear history from localStorage:", error);
+      console.error(`Failed to clear ${filterType} history from localStorage:`, error);
     }
   };
 
@@ -169,6 +182,9 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
        return type === 'selling-price' ? 'Offer / Discount' : 'Total Discount';
    };
 
+   // Label for the clear button
+   const clearButtonLabel = filterType === 'selling-price' ? 'Clear Selling Price History' : 'Clear Payout History';
+
 
   return (
     <TooltipProvider> {/* Wrap with TooltipProvider */}
@@ -177,15 +193,15 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
         {/* Header with Clear Button */}
         <CardHeader className="pt-4 pb-2 px-4 flex flex-row items-center justify-between border-b">
             <div className="flex-1"></div> {/* Spacer */}
-            {/* Show clear button only if there's history and it's client-side */}
-            {isClient && allHistory.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearHistory} aria-label="Clear history" className="text-destructive hover:text-destructive">
-                <Trash2 className="h-4 w-4 mr-1" />
-                Clear All History
+            {/* Show clear button only if there's history *of this type* and it's client-side */}
+            {isClient && filteredHistory.length > 0 && (
+              <Button variant="ghost" size="sm" onClick={clearFilteredHistory} aria-label={clearButtonLabel} className="text-destructive hover:text-destructive text-xs h-8">
+                <Trash2 className="h-3 w-3 mr-1" />
+                {clearButtonLabel}
               </Button>
             )}
              {/* Placeholder to prevent layout shift when button isn't rendered */}
-             {(!isClient || allHistory.length === 0) && <div className="h-9 w-[150px]"></div>}
+             {(!isClient || filteredHistory.length === 0) && <div className="h-8 w-[180px]"></div>} {/* Adjusted width */}
         </CardHeader>
 
         {/* Table container */}
@@ -198,7 +214,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
             </div>
           ) : filteredHistory.length === 0 ? (
             <div className="text-center text-muted-foreground py-8 px-4">
-              No {filterType !== 'all' ? `${filterType.replace('-', ' ')}` : ''} history yet.
+              No {filterType.replace('-', ' ')} history yet.
             </div>
           ) : (
              <div className="max-h-[300px] sm:max-h-[400px] overflow-y-auto border-t rounded-b-lg mx-0 mb-0 relative"> {/* Container for sticky header, adjusted border/margins */}
@@ -210,7 +226,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                      {/* Reduced padding in TableHead via ui/table.tsx */}
                      <TableHead className="whitespace-nowrap border-r">Timestamp</TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        {getInputLabel(filterType === 'all' ? 'selling-price' : filterType)} {/* Dynamic label */}
+                        {getInputLabel(filterType)} {/* Dynamic label based on prop */}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -221,7 +237,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        {getFeeLabel(filterType === 'all' ? 'selling-price' : filterType)}
+                        {getFeeLabel(filterType)}
                          <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -232,7 +248,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        {getDiscountLabel(filterType === 'all' ? 'selling-price' : filterType)}
+                        {getDiscountLabel(filterType)}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -243,7 +259,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap border-r">
-                        {getResultLabel(filterType === 'all' ? 'selling-price' : filterType)} {/* Dynamic label */}
+                        {getResultLabel(filterType)} {/* Dynamic label based on prop */}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
@@ -254,7 +270,7 @@ export default function HistoryView({ filterType }: HistoryViewProps) {
                         </Tooltip>
                      </TableHead>
                      <TableHead className="text-right whitespace-nowrap"> {/* No border-r */}
-                        {getFinalPriceLabel(filterType === 'all' ? 'selling-price' : filterType)}
+                        {getFinalPriceLabel(filterType)}
                         <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
