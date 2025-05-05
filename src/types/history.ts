@@ -5,22 +5,22 @@ export interface HistoryEntry {
   id: string;
   timestamp: number;
   /**
-   * 'with-fee': Input is Desired Item Price (X), Result is Selling Price *before* discount. Fee is calculated on SP before discount.
-   * 'without-fee': Input is Selling Price *Before* Discount, Result is Item Price Seller Receives. Fee is calculated on SP *after* discount.
+   * 'selling-price': Calculates the Selling Price based on Desired Payout.
+   * 'payout': Calculates the Payout based on Selling Price Before Discount.
    */
-  type: 'with-fee' | 'without-fee';
+  type: 'selling-price' | 'payout';
   /**
    * The primary value entered by the user.
-   * If type is 'with-fee', this is the Desired Item Price (X) the seller wants to receive (before fee, before discount).
-   * If type is 'without-fee', this is the Selling Price *before* any discount was applied.
+   * If type is 'selling-price', this is the Desired Payout (X) the seller wants to receive.
+   * If type is 'payout', this is the Selling Price *before* any discount was applied.
    */
   input: number;
   feePercentage: number;
   discountPercentage: number; // Discount percentage applied (0-1)
   /**
    * The calculated fee amount.
-   * If type is 'with-fee', fee is based on Selling Price *before* discount.
-   * If type is 'without-fee', fee is based on Selling Price *after* discount (Final Price Customer Pays).
+   * If type is 'selling-price', fee is based on Selling Price *before* discount.
+   * If type is 'payout', fee is based on Selling Price *after* discount (Final Price Customer Pays).
    */
   fee: number;
   /**
@@ -29,15 +29,16 @@ export interface HistoryEntry {
   discountAmount: number;
   /**
    * The calculated main result.
-   * If type is 'with-fee', this is the Selling Price *before* discount (SP = X / (1 - Fee%)).
-   * If type is 'without-fee', this is the Item Price the seller receives (Price After Discount * (1 - Fee%)).
+   * If type is 'selling-price', this is the Selling Price *before* discount (SP = X / (1 - Fee%)).
+   * If type is 'payout', this is the Payout the seller receives (Price After Discount * (1 - Fee%)).
    */
   result: number;
   /**
    * The final price the customer pays.
-   * If type is 'with-fee', this is SP Before Discount * (1 - Discount%).
-   * If type is 'without-fee', this is SP Before Discount * (1 - Discount%).
+   * If type is 'selling-price', this is SP Before Discount * (1 - Discount%).
+   * If type is 'payout', this is SP Before Discount * (1 - Discount%).
    */
   finalPrice: number;
   currencySymbol: string;
 }
+

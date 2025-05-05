@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator } from 'lucide-react'; // Added Calculator icon
+import { Percent, Plus, Minus, Tag, Info, TrendingUp, TrendingDown, Calculator, CircleDollarSign, HandCoins } from 'lucide-react'; // Added Calculator, CircleDollarSign, HandCoins icons
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history'; // Import shared type
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants'; // Import constants
@@ -68,20 +68,20 @@ export default function FeeCalculator() {
   const [itemPriceInput, setItemPriceInput] = useState<string>('');
   const [sellingPriceBeforeDiscountInput, setSellingPriceBeforeDiscountInput] = useState<string>(''); // State for Selling Price Before Discount
   const [discountInput, setDiscountInput] = useState<string>(''); // State for discount input
-  const [activeTab, setActiveTab] = useState<'with-fee' | 'without-fee'>('with-fee');
+  const [activeTab, setActiveTab] = useState<'selling-price' | 'payout'>('selling-price'); // Renamed tabs
   const [feePercentage, setFeePercentage] = useState<number>(DEFAULT_FEE_PERCENTAGE);
   const [currencySymbol, setCurrencySymbol] = useState<string>(DEFAULT_CURRENCY_SYMBOL);
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
 
-  // State for calculated results (updated on button click)
-  const [calculatedResultsWithFee, setCalculatedResultsWithFee] = useState<{
+  // State for calculated results (updated on button click) - Renamed
+  const [calculatedResultsSellingPrice, setCalculatedResultsSellingPrice] = useState<{
     sellingPriceBeforeDiscount: number | null | typeof Infinity;
     customerPriceAfterDiscount: number | null | typeof Infinity;
     discountAmountForward: number | null;
     feeAmountForward: number | null | typeof Infinity;
   } | null>(null);
 
-  const [calculatedResultsWithoutFee, setCalculatedResultsWithoutFee] = useState<{
+  const [calculatedResultsPayout, setCalculatedResultsPayout] = useState<{
     itemPriceSellerReceives: number | null;
     discountAmountReverse: number | null;
     feeAmountReverse: number | null;
@@ -199,19 +199,19 @@ export default function FeeCalculator() {
   };
 
    const handleTabChange = (value: string) => {
-     const newTab = value as 'with-fee' | 'without-fee';
+     const newTab = value as 'selling-price' | 'payout'; // Updated tab values
      setActiveTab(newTab);
      // Clear inputs and calculated results when switching tabs
      setItemPriceInput('');
      setSellingPriceBeforeDiscountInput('');
      setDiscountInput('');
-     setCalculatedResultsWithFee(null);
-     setCalculatedResultsWithoutFee(null);
+     setCalculatedResultsSellingPrice(null); // Updated state name
+     setCalculatedResultsPayout(null); // Updated state name
    };
 
 
-  // Calculation logic for 'Item Price + Fee' tab (reused in button handler)
-  const calculateWithFeeLogic = useCallback((priceInput: string, discount: number, fee: number) => {
+  // Calculation logic for 'Selling Price Calculator' tab (reused in button handler) - Renamed
+  const calculateSellingPriceLogic = useCallback((priceInput: string, discount: number, fee: number) => {
       const desiredPrice = parseFloat(priceInput); // X
       if (!isNaN(desiredPrice) && desiredPrice >= 0 && fee < 1) {
         // SP Before Discount is calculated based on the desired price *after* the fee is taken
@@ -240,8 +240,8 @@ export default function FeeCalculator() {
       return { sellingPriceBeforeDiscount: null, customerPriceAfterDiscount: null, discountAmountForward: null, feeAmountForward: null };
   }, []);
 
-  // Calculation logic for 'Selling Price - Fee' tab (reused in button handler)
-  const calculateWithoutFeeLogic = useCallback((spInput: string, discount: number, fee: number) => {
+  // Calculation logic for 'Payout Calculator' tab (reused in button handler) - Renamed
+  const calculatePayoutLogic = useCallback((spInput: string, discount: number, fee: number) => {
       // The input 'spInput' is the Selling Price *Before* any discount is applied
       const spBeforeDiscount = parseFloat(spInput);
 
@@ -272,10 +272,10 @@ export default function FeeCalculator() {
   }, []);
 
 
-  // Calculate and Add to history on button click for 'with-fee' tab
-  const handleCalculateWithFee = useCallback(() => {
-    const results = calculateWithFeeLogic(itemPriceInput, discountPercentage, feePercentage);
-    setCalculatedResultsWithFee(results); // Update display state
+  // Calculate and Add to history on button click for 'selling-price' tab - Renamed
+  const handleCalculateSellingPrice = useCallback(() => {
+    const results = calculateSellingPriceLogic(itemPriceInput, discountPercentage, feePercentage);
+    setCalculatedResultsSellingPrice(results); // Update display state
 
     if (
       results.sellingPriceBeforeDiscount !== null &&
@@ -289,7 +289,7 @@ export default function FeeCalculator() {
       const price = parseFloat(itemPriceInput);
       if (!isNaN(price) && price >= 0) {
         addHistoryEntry({
-          type: 'with-fee',
+          type: 'selling-price', // Updated type
           input: price, // Desired Item Price (X)
           feePercentage: feePercentage,
           discountPercentage: discountPercentage, // Store discount
@@ -309,13 +309,13 @@ export default function FeeCalculator() {
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculateWithFeeLogic, // Include dependency
+    calculateSellingPriceLogic, // Include dependency
   ]);
 
-  // Calculate and Add to history on button click for 'without-fee' tab
-  const handleCalculateWithoutFee = useCallback(() => {
-     const results = calculateWithoutFeeLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
-     setCalculatedResultsWithoutFee(results); // Update display state
+  // Calculate and Add to history on button click for 'payout' tab - Renamed
+  const handleCalculatePayout = useCallback(() => {
+     const results = calculatePayoutLogic(sellingPriceBeforeDiscountInput, discountPercentage, feePercentage);
+     setCalculatedResultsPayout(results); // Update display state
 
     if (
       results.itemPriceSellerReceives !== null &&
@@ -327,7 +327,7 @@ export default function FeeCalculator() {
       const spBeforeDiscount = parseFloat(sellingPriceBeforeDiscountInput);
       if (!isNaN(spBeforeDiscount) && spBeforeDiscount >= 0) {
         addHistoryEntry({
-          type: 'without-fee',
+          type: 'payout', // Updated type
           input: spBeforeDiscount, // Input is Selling Price Before Discount
           feePercentage: feePercentage,
           discountPercentage: discountPercentage, // Store discount
@@ -347,7 +347,7 @@ export default function FeeCalculator() {
     feePercentage,
     currencySymbol,
     isLoadingSettings,
-    calculateWithoutFeeLogic, // Include dependency
+    calculatePayoutLogic, // Include dependency
   ]);
 
 
@@ -373,7 +373,7 @@ export default function FeeCalculator() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold">Uber Eats Price Calculator</CardTitle>
           <CardDescription>
-            Calculate selling prices in {isLoadingSettings ? '...' : currencySymbol} with fee, and optional discount.
+            Calculate selling prices and payouts in {isLoadingSettings ? '...' : currencySymbol} with fee and optional discount.
             Current Fee: {isLoadingSettings ? '...' : `${displayFeePercentage}%`}
           </CardDescription>
         </CardHeader>
@@ -385,40 +385,40 @@ export default function FeeCalculator() {
           ) : (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="with-fee">
-                  <TrendingUp className="h-4 w-4 mr-2"/> Item Price <span className="mx-1 font-bold">+</span> Fee
+                <TabsTrigger value="selling-price">
+                  <CircleDollarSign className="h-4 w-4 mr-2"/> Selling Price Calculator
                 </TabsTrigger>
-                <TabsTrigger value="without-fee">
-                   <TrendingDown className="h-4 w-4 mr-2"/>Selling Price <span className="mx-1 font-bold">-</span> Fee
+                <TabsTrigger value="payout">
+                   <HandCoins className="h-4 w-4 mr-2"/> Payout Calculator
                 </TabsTrigger>
               </TabsList>
 
-              {/* With Fee Tab */}
-              <TabsContent value="with-fee" className="mt-6 space-y-6">
+              {/* Selling Price Calculator Tab */}
+              <TabsContent value="selling-price" className="mt-6 space-y-6">
                  {/* Desired Item Price Input */}
                 <div className="space-y-2">
                   <Label htmlFor="item-price-input" className="flex items-center gap-2">
                     <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
-                    Desired Item Price (Seller Receives)
+                    Desired Payout (Seller Receives)
                   </Label>
                   <Input
                     id="item-price-input"
                     type="text"
                     inputMode="decimal"
-                    placeholder={`e.g., 1000.00`}
+                    placeholder={`e.g., 700.00`}
                     value={itemPriceInput}
                     onChange={handleItemPriceInputChange}
                     className="bg-secondary focus:ring-accent text-base"
-                    aria-label="Desired Item Price (Seller Receives)"
+                    aria-label="Desired Payout (Seller Receives)"
                   />
                    <p className="text-xs text-muted-foreground">
                      The amount you want after the Uber fee is deducted.
                    </p>
                 </div>
 
-                {/* Discount Input Section for 'with-fee' */}
+                {/* Discount Input Section for 'selling-price' */}
                 <div className="space-y-2">
-                   <Label htmlFor="discount-input-with-fee" className="flex items-center gap-2">
+                   <Label htmlFor="discount-input-selling-price" className="flex items-center gap-2">
                       <Tag className="h-4 w-4 text-muted-foreground" />
                       Optional Discount Percentage
                       <Tooltip delayDuration={100}>
@@ -431,7 +431,7 @@ export default function FeeCalculator() {
                        </Tooltip>
                    </Label>
                    <Input
-                      id="discount-input-with-fee"
+                      id="discount-input-selling-price"
                       type="text"
                       inputMode="decimal"
                       placeholder="e.g., 10 or 15.5 (0-100)"
@@ -446,11 +446,11 @@ export default function FeeCalculator() {
                 </div>
 
                 {/* Calculate Button */}
-                 <Button onClick={handleCalculateWithFee} className="w-full">
-                   <Calculator className="mr-2 h-4 w-4" /> Calculate
+                 <Button onClick={handleCalculateSellingPrice} className="w-full">
+                   <Calculator className="mr-2 h-4 w-4" /> Calculate Selling Price
                  </Button>
 
-                {/* Result Box for 'with-fee' */}
+                {/* Result Box for 'selling-price' */}
                 <div className="space-y-3 rounded-lg border bg-background p-4">
                     {/* Selling Price Before Discount */}
                     <div className="flex justify-between items-center">
@@ -462,12 +462,12 @@ export default function FeeCalculator() {
                                  <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                               </TooltipTrigger>
                               <TooltipContent side="top" className="max-w-xs">
-                                 <p className="text-xs">Calculated as: Desired Price / (1 - Fee %). This is the base price before any customer discount.</p>
+                                 <p className="text-xs">Calculated as: Desired Payout / (1 - Fee %). This is the base price before any customer discount.</p>
                               </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsWithFee?.sellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsWithFee?.sellingPriceBeforeDiscount ?? null)}
+                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.sellingPriceBeforeDiscount !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(calculatedResultsSellingPrice?.sellingPriceBeforeDiscount ?? null)}
                        </span>
                      </div>
 
@@ -485,8 +485,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                            </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsWithFee?.feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsWithFee?.feeAmountForward ?? null)}
+                       <span className={cn("font-semibold text-sm", calculatedResultsSellingPrice?.feeAmountForward !== null ? "text-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(calculatedResultsSellingPrice?.feeAmountForward ?? null)}
                        </span>
                      </div>
 
@@ -498,7 +498,7 @@ export default function FeeCalculator() {
                              Discount Amount ({displayDiscountPercentage}%)
                           </Label>
                           <span className="font-semibold text-sm text-green-600 dark:text-green-400">
-                            - {formatCurrency(calculatedResultsWithFee?.discountAmountForward ?? null)}
+                            - {formatCurrency(calculatedResultsSellingPrice?.discountAmountForward ?? null)}
                           </span>
                         </div>
                      )}
@@ -521,14 +521,14 @@ export default function FeeCalculator() {
                          </Tooltip>
                        </Label>
                        <span className="text-lg font-bold text-accent">
-                         {formatCurrency(calculatedResultsWithFee?.customerPriceAfterDiscount ?? null)}
+                         {formatCurrency(calculatedResultsSellingPrice?.customerPriceAfterDiscount ?? null)}
                        </span>
                      </div>
                   </div>
               </TabsContent>
 
-              {/* Without Fee Tab */}
-              <TabsContent value="without-fee" className="mt-6 space-y-6">
+              {/* Payout Calculator Tab */}
+              <TabsContent value="payout" className="mt-6 space-y-6">
                  {/* Selling Price Before Discount Input */}
                 <div className="space-y-2">
                   <Label htmlFor="selling-price-before-discount-input" className="flex items-center gap-2">
@@ -539,7 +539,7 @@ export default function FeeCalculator() {
                     id="selling-price-before-discount-input"
                     type="text"
                     inputMode="decimal"
-                    placeholder={`e.g., 1300.00`}
+                    placeholder={`e.g., 1000.00`}
                     value={sellingPriceBeforeDiscountInput}
                     onChange={handleSellingPriceBeforeDiscountInputChange}
                     className="bg-secondary focus:ring-accent text-base"
@@ -550,9 +550,9 @@ export default function FeeCalculator() {
                    </p>
                 </div>
 
-                {/* Discount Input Section for 'without-fee' */}
+                {/* Discount Input Section for 'payout' */}
                 <div className="space-y-2">
-                   <Label htmlFor="discount-input-without-fee" className="flex items-center gap-2">
+                   <Label htmlFor="discount-input-payout" className="flex items-center gap-2">
                       <Tag className="h-4 w-4 text-muted-foreground" />
                       Optional Discount Percentage
                        <Tooltip delayDuration={100}>
@@ -565,7 +565,7 @@ export default function FeeCalculator() {
                        </Tooltip>
                    </Label>
                    <Input
-                      id="discount-input-without-fee"
+                      id="discount-input-payout"
                       type="text"
                       inputMode="decimal"
                       placeholder="e.g., 10 or 15.5 (0-100)"
@@ -580,11 +580,11 @@ export default function FeeCalculator() {
                 </div>
 
                 {/* Calculate Button */}
-                 <Button onClick={handleCalculateWithoutFee} className="w-full">
-                   <Calculator className="mr-2 h-4 w-4" /> Calculate
+                 <Button onClick={handleCalculatePayout} className="w-full">
+                   <Calculator className="mr-2 h-4 w-4" /> Calculate Payout
                  </Button>
 
-                {/* Result Box for 'without-fee' */}
+                {/* Result Box for 'payout' */}
                  <div className="space-y-3 rounded-lg border bg-background p-4">
                      {/* Final Customer Price (Shown First for Clarity) */}
                      <div className="flex justify-between items-center">
@@ -600,8 +600,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm", calculatedResultsWithoutFee?.finalCustomerPriceReverse !== null ? "text-muted-foreground" : "text-muted-foreground")}>
-                         {formatCurrency(calculatedResultsWithoutFee?.finalCustomerPriceReverse ?? null)}
+                       <span className={cn("font-semibold text-sm", calculatedResultsPayout?.finalCustomerPriceReverse !== null ? "text-muted-foreground" : "text-muted-foreground")}>
+                         {formatCurrency(calculatedResultsPayout?.finalCustomerPriceReverse ?? null)}
                        </span>
                      </div>
 
@@ -613,7 +613,7 @@ export default function FeeCalculator() {
                               Discount Given ({displayDiscountPercentage}%)
                            </Label>
                            <span className="font-semibold text-sm text-destructive">
-                              - {formatCurrency(calculatedResultsWithoutFee?.discountAmountReverse ?? null)}
+                              - {formatCurrency(calculatedResultsPayout?.discountAmountReverse ?? null)}
                            </span>
                         </div>
                      )}
@@ -632,8 +632,8 @@ export default function FeeCalculator() {
                              </TooltipContent>
                           </Tooltip>
                       </Label>
-                      <span className={cn("font-semibold text-sm text-destructive", calculatedResultsWithoutFee?.feeAmountReverse !== null ? "" : "text-muted-foreground")}>
-                         - {formatCurrency(calculatedResultsWithoutFee?.feeAmountReverse ?? null)}
+                      <span className={cn("font-semibold text-sm text-destructive", calculatedResultsPayout?.feeAmountReverse !== null ? "" : "text-muted-foreground")}>
+                         - {formatCurrency(calculatedResultsPayout?.feeAmountReverse ?? null)}
                       </span>
                     </div>
 
@@ -645,7 +645,7 @@ export default function FeeCalculator() {
                     <div className="flex justify-between items-center">
                      <Label className="flex items-center gap-2 font-medium text-sm">
                        <span className="font-semibold inline-block min-w-6 text-center text-accent">{currencySymbol}</span>
-                       Item Price (Seller Receives)
+                       Payout (Seller Receives)
                        <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
                               <Info className="h-3 w-3 text-muted-foreground cursor-help" />
@@ -656,7 +656,7 @@ export default function FeeCalculator() {
                         </Tooltip>
                      </Label>
                      <span className="text-lg font-bold text-accent">
-                        {formatCurrency(calculatedResultsWithoutFee?.itemPriceSellerReceives ?? null)}
+                        {formatCurrency(calculatedResultsPayout?.itemPriceSellerReceives ?? null)}
                      </span>
                    </div>
 
@@ -669,3 +669,4 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
+

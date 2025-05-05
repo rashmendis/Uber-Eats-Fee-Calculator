@@ -36,19 +36,21 @@ export default function HistoryView() {
             typeof entry.input === 'number' &&
             typeof entry.feePercentage === 'number' &&
             typeof entry.fee === 'number' &&
-            typeof entry.result === 'number'
+            typeof entry.result === 'number' &&
+            (entry.type === 'selling-price' || entry.type === 'payout') // Validate type
           ).map(entry => {
              // Ensure finalPrice exists and makes sense based on type and discount
             let defaultFinalPrice = 0;
-            if (typeof entry.input === 'number' && typeof entry.discountPercentage === 'number') {
-              // Final Price (Customer Pays) is always SP Before Discount * (1 - Discount%)
-              defaultFinalPrice = entry.input * (1 - entry.discountPercentage);
-            } else if (entry.type === 'with-fee' && typeof entry.result === 'number') {
-               // Fallback for 'with-fee' if discount missing (older entries)
-               defaultFinalPrice = entry.result; // SP before discount
+            // Final Price (Customer Pays) is always SP Before Discount * (1 - Discount%)
+            // For 'selling-price' type, result is SP Before Discount
+            // For 'payout' type, input is SP Before Discount
+            const spBeforeDiscount = entry.type === 'selling-price' ? entry.result : entry.input;
+
+            if (typeof spBeforeDiscount === 'number' && typeof entry.discountPercentage === 'number') {
+              defaultFinalPrice = spBeforeDiscount * (1 - entry.discountPercentage);
             } else {
-                // Cannot reliably calculate fallback for 'without-fee' if discount missing
-                defaultFinalPrice = entry.result; // Less ideal fallback (Seller Receives amount)
+               // Fallback if data is somehow inconsistent
+               defaultFinalPrice = entry.result; // Less ideal fallback
             }
 
 
@@ -128,12 +130,12 @@ export default function HistoryView() {
     return `${(value * 100).toFixed(1)}%`;
   };
 
-  // Determine label based on calculation type
+  // Determine label based on calculation type - Updated labels
   const getInputLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'Desired Price' : 'SP (Before Disc)';
+      return type === 'selling-price' ? 'Desired Payout' : 'SP (Before Disc)';
   };
   const getResultLabel = (type: HistoryEntry['type']) => {
-      return type === 'with-fee' ? 'SP (Before Disc)' : 'Seller Receives';
+      return type === 'selling-price' ? 'SP (Before Disc)' : 'Payout';
   };
   const getFinalPriceLabel = () => { // Final Price always means Customer Price now
       return 'Customer Price';
@@ -172,7 +174,17 @@ export default function HistoryView() {
                   <TableRow className="hover:bg-transparent"> {/* Remove hover */}
                      {/* Add border-r for vertical lines */}
                      <TableHead className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Timestamp</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Input</TableHead>
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
+                        Input
+                        <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top">
+                              <p className="text-xs">Selling Price Calc: Desired Payout<br/>Payout Calc: SP (Before Disc)</p>
+                           </TooltipContent>
+                        </Tooltip>
+                     </TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Disc (%)</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
@@ -184,7 +196,7 @@ export default function HistoryView() {
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                              <p className="text-xs">With-Fee: SP (Before Disc)<br/>Without-Fee: Seller Receives</p>
+                              <p className="text-xs">Selling Price Calc: SP (Before Disc)<br/>Payout Calc: Payout</p>
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
@@ -195,7 +207,7 @@ export default function HistoryView() {
                               <Info className="h-3 w-3 inline-block ml-1 text-muted-foreground cursor-help" />
                            </TooltipTrigger>
                            <TooltipContent side="top">
-                               <p className="text-xs">Always the final price the Customer Pays (after discount, before fee is added back implicitly by Uber).</p> {/* <<< UPDATED TOOLTIP */}
+                               <p className="text-xs">Always the final price the Customer Pays (after discount).</p>
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
