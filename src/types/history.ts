@@ -13,7 +13,7 @@ export interface HistoryEntry {
   /**
    * The primary numeric value entered by the user as the basis for the calculation.
    * If type is 'selling-price', this is the Desired Payout the seller wants to receive.
-   * If type is 'payout' (and stored, currently only for single item 'selling-price'), this might represent the Selling Price Before Discount.
+   * If type is 'payout' (currently not stored), this would represent the list of item Selling Prices Before Discount.
    */
   input: number;
   feePercentage: number;
@@ -43,3 +43,4 @@ export interface HistoryEntry {
   finalPrice: number;
   currencySymbol: string;
 }
+

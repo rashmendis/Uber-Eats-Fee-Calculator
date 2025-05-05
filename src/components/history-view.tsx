@@ -187,10 +187,8 @@ export default function HistoryView() {
                            </TooltipContent>
                         </Tooltip>
                      </TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee (%)</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Offer (%)</TableHead> {/* Changed label */}
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Fee</TableHead>
-                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Discount</TableHead>
+                     <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">Offer / Discount</TableHead>
                      <TableHead className="text-right px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap border-r">
                         Result
                         <Tooltip delayDuration={100}>
@@ -226,14 +224,12 @@ export default function HistoryView() {
                           <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{getInputLabel(entry.type)}</span>
                           {formatCurrency(entry.input, entry.currencySymbol)}
                       </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">
-                        {formatPercentage(entry.feePercentage)}
-                      </TableCell>
-                       <TableCell className="text-right text-xs text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">
-                        {formatPercentage(entry.discountPercentage)}
-                      </TableCell>
-                      <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">{formatCurrency(entry.fee, entry.currencySymbol)}</TableCell>
-                       <TableCell className="text-right text-xs sm:text-sm text-muted-foreground px-3 py-2 sm:px-4 sm:py-3 border-r">
+                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.feePercentage)}</span>
+                         {formatCurrency(entry.fee, entry.currencySymbol)}
+                       </TableCell>
+                       <TableCell className="text-right text-xs sm:text-sm px-3 py-2 sm:px-4 sm:py-3 border-r">
+                         <span className="block text-muted-foreground text-[0.65rem] leading-tight -mb-0.5">{formatPercentage(entry.discountPercentage)}</span>
                          {formatCurrency(entry.discountAmount, entry.currencySymbol)}
                        </TableCell>
                       <TableCell className="text-right text-xs sm:text-sm font-medium px-3 py-2 sm:px-4 sm:py-3 border-r">
@@ -255,3 +251,4 @@ export default function HistoryView() {
     </TooltipProvider>
   );
 }
+
