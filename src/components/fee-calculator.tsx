@@ -40,6 +40,13 @@ const addHistoryEntry = (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => {
     const updatedHistory = [newEntry, ...currentHistory].slice(0, MAX_HISTORY_LENGTH);
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
 
+    // Dispatch a storage event to notify other components (like HistoryView)
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: HISTORY_STORAGE_KEY,
+      newValue: JSON.stringify(updatedHistory),
+      storageArea: localStorage
+    }));
+
   } catch (error) {
     console.error("Failed to save history to localStorage:", error);
   }
@@ -194,7 +201,7 @@ export default function FeeCalculator() {
   const displayFeePercentage = (feePercentage * 100).toFixed(1); // Display with one decimal place
 
   return (
-    <Card className="w-full max-w-lg shadow-lg"> {/* Changed max-w-md to max-w-lg */}
+    <Card className="w-full max-w-4xl shadow-lg"> {/* Changed max-w-lg to max-w-4xl */}
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Uber Eats Fee Calculator</CardTitle>
         <CardDescription>
