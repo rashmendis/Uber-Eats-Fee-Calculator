@@ -383,38 +383,9 @@ export default function FeeCalculator() {
                 <TabsTrigger value="without-fee">Selling Price - Fee</TabsTrigger>
               </TabsList>
 
-              {/* Common Discount Input Section */}
-              <div className="mt-6 mb-4 space-y-2">
-                 <Label htmlFor="discount-input" className="flex items-center gap-2">
-                    <Tag className="h-4 w-4 text-muted-foreground" />
-                    Optional Discount Percentage
-                    <Tooltip delayDuration={100}>
-                        <TooltipTrigger asChild>
-                           <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-xs">
-                           <p className="text-xs">Enter the discount percentage (0-100) offered to the customer. This affects the final price the customer sees.</p>
-                        </TooltipContent>
-                     </Tooltip>
-                 </Label>
-                 <Input
-                    id="discount-input"
-                    type="text"
-                    inputMode="decimal"
-                    placeholder="e.g., 10 or 15.5 (0-100)"
-                    value={discountInput}
-                    onChange={handleDiscountInputChange}
-                    // Blur handlers added to specific tabs where needed
-                    className="bg-secondary focus:ring-accent text-base"
-                    aria-label="Optional Discount Percentage"
-                 />
-                 <p className="text-xs text-muted-foreground">
-                    Leave blank or 0 if no discount is applied. Current: {displayDiscountPercentage}%
-                 </p>
-              </div>
-
               {/* With Fee Tab */}
-              <TabsContent value="with-fee" className="mt-2 space-y-6"> {/* Reduced top margin */}
+              <TabsContent value="with-fee" className="mt-6 space-y-6">
+                {/* Desired Item Price Input */}
                 <div className="space-y-2">
                   <Label htmlFor="item-price-input" className="flex items-center gap-2">
                     <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
@@ -433,6 +404,36 @@ export default function FeeCalculator() {
                   />
                    <p className="text-xs text-muted-foreground">
                      The amount you want after the Uber fee is deducted.
+                   </p>
+                </div>
+
+                {/* Discount Input Section for 'with-fee' */}
+                <div className="space-y-2">
+                   <Label htmlFor="discount-input-with-fee" className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      Optional Discount Percentage
+                      <Tooltip delayDuration={100}>
+                          <TooltipTrigger asChild>
+                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                             <p className="text-xs">Enter the discount percentage (0-100) offered to the customer. This affects the final price the customer sees.</p>
+                          </TooltipContent>
+                       </Tooltip>
+                   </Label>
+                   <Input
+                      id="discount-input-with-fee"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="e.g., 10 or 15.5 (0-100)"
+                      value={discountInput}
+                      onChange={handleDiscountInputChange}
+                      onBlur={handleBlurWithFee} // Also trigger history update on discount blur
+                      className="bg-secondary focus:ring-accent text-base"
+                      aria-label="Optional Discount Percentage"
+                   />
+                   <p className="text-xs text-muted-foreground">
+                      Leave blank or 0 if no discount is applied. Current: {displayDiscountPercentage}%
                    </p>
                 </div>
 
@@ -506,7 +507,8 @@ export default function FeeCalculator() {
               </TabsContent>
 
               {/* Without Fee Tab */}
-              <TabsContent value="without-fee" className="mt-2 space-y-6"> {/* Reduced top margin */}
+              <TabsContent value="without-fee" className="mt-6 space-y-6">
+                 {/* Selling Price Input */}
                 <div className="space-y-2">
                   <Label htmlFor="selling-price-input" className="flex items-center gap-2">
                      <span className="font-semibold inline-block min-w-6 text-center text-muted-foreground">{currencySymbol}</span>
@@ -527,6 +529,37 @@ export default function FeeCalculator() {
                      The final price the customer pays, including any discount.
                    </p>
                 </div>
+
+                {/* Discount Input Section for 'without-fee' */}
+                <div className="space-y-2">
+                   <Label htmlFor="discount-input-without-fee" className="flex items-center gap-2">
+                      <Tag className="h-4 w-4 text-muted-foreground" />
+                      Optional Discount Percentage
+                       <Tooltip delayDuration={100}>
+                          <TooltipTrigger asChild>
+                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                             <p className="text-xs">Enter the discount percentage (0-100) that was applied to reach the 'Selling Price (Customer Pays)'.</p>
+                          </TooltipContent>
+                       </Tooltip>
+                   </Label>
+                   <Input
+                      id="discount-input-without-fee"
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="e.g., 10 or 15.5 (0-100)"
+                      value={discountInput}
+                      onChange={handleDiscountInputChange}
+                      onBlur={handleBlurWithoutFee} // Also trigger history update on discount blur
+                      className="bg-secondary focus:ring-accent text-base"
+                      aria-label="Optional Discount Percentage"
+                   />
+                   <p className="text-xs text-muted-foreground">
+                      Leave blank or 0 if no discount was applied. Current: {displayDiscountPercentage}%
+                   </p>
+                </div>
+
 
                 {/* Result Box for 'without-fee' */}
                  <div className="space-y-3 rounded-lg border bg-background p-4">
