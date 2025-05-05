@@ -3,16 +3,30 @@
 
 # Uber Eats Fee Calculator - Built with Gemini AI (via Firebase Studio)
 
-This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage and an optional offer/discount percentage. It allows users to calculate the final selling price needed based on a desired item price or determine the original item price by subtracting the fee and considering the discount from a given selling price.
+This is a simple Next.js application designed to calculate Uber Eats prices, factoring in a configurable fee percentage and an optional offer/discount percentage. It allows users to:
+
+1.  **Calculate Selling Price (Based on Desired Payout + Fee + Optional Offer):** Determine the required selling price to achieve a specific payout after fees and discounts.
+2.  **Calculate Payout (Multiple Items with Offers - Fee):** Calculate the total payout for one or more items, each with its own selling price and optional offer, after deducting the Uber fee.
 
 ## Features
 
-*   **Calculate Selling Price (Based on Desired Payout + Fee + Optional Offer):** Enter the **Desired Payout** you want to receive *after* the fee is deducted. The calculator determines the required **Selling Price (Before Discount)** using `Selling Price = Desired Payout / (1 - Fee Percentage)`. Optionally, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom). It calculates the **Final Price (Customer Pays)** as `Selling Price (Before Discount) * (1 - Offer Percentage)`. It also shows the calculated **Uber Fee** (`Selling Price (Before Discount) * Fee Percentage`), the **Discount Amount**, and the **Actual Payout** (which matches the input Desired Payout).
-*   **Calculate Payout (Selling Price - Offer - Fee):** Enter a **Selling Price (Before Discount)** (the price listed on the platform *before* any offer/discount). Optionally, select the **Offer Percentage** (0-100) offered to the customer. The calculator first calculates the **Discount Given** (`Selling Price (Before Discount) * Offer Percentage`) and the **Final Price (Customer Pays)** (`Selling Price (Before Discount) * (1 - Offer Percentage)`). Then, it calculates the **Uber Fee** based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`). Finally, it determines the **Payout (Seller Receives)** (`Final Price - Uber Fee`).
+*   **Selling Price Calculator Tab:**
+    *   Enter the **Desired Payout** you want to receive *after* the offer and fee are deducted.
+    *   (Optional) Select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom) applied to the Selling Price.
+    *   Calculates the required **Selling Price (Before Discount)** using the formula: `SP_Before_Discount = Desired_Payout / ((1 - Offer_Percent) * (1 - Fee_Percent))`.
+    *   Shows the **Discount Amount**, **Final Price (Customer Pays)** (`SP_Before_Discount * (1 - Offer_Percent)`), the **Uber Fee** (calculated on the *Final Price*), and verifies the **Actual Payout** matches the input Desired Payout.
+*   **Payout Calculator Tab:**
+    *   Add one or more items to the calculation.
+    *   For each item, enter the **Selling Price (Before Discount)**.
+    *   (Optional) For each item, select an **Offer Percentage** (0%, 20%, 30%, 40%, 50%, 75%, or Custom).
+    *   Calculates the **Total Final Price (Customer Pays)** by summing `SP_Before_Discount * (1 - Offer_Percent)` for all items.
+    *   Calculates the **Total Discount Given** across all items.
+    *   Calculates the **Total Uber Fee** based on the *Total Final Price (Customer Pays)* (`Total_Final_Price * Fee_Percent`).
+    *   Determines the final **Total Payout (Seller Receives)** (`Total_Final_Price - Total_Uber_Fee`).
 *   **Configurable Settings:**
     *   Set the fee percentage (defaults to 30%).
     *   Set the currency symbol (defaults to 'Rs.').
-*   **Calculation History:** View a history of your past calculations in an expandable section.
+*   **Calculation History:** View a history of your past *Selling Price Calculator* calculations in an expandable section. (Multi-item Payout history is not currently saved).
 *   **Client-Side Storage:** Settings and history are stored locally in your browser's `localStorage`.
 *   **Responsive Design:** Adapts to different screen sizes.
 
@@ -66,35 +80,40 @@ This will start the development server, usually on `http://localhost:9002`. The 
 1.  **Open the App:** Navigate to the running application in your browser.
 2.  **Calculator:**
     *   **Selling Price Calculator Tab:**
-        *   Enter the **Desired Payout** (the amount you want to receive *after* fees).
-        *   (Optional) Select an **Offer Percentage** from the dropdown (0%, 20%, 30%, 40%, 50%, 75%) or choose "Custom" and enter a percentage (0-100).
+        *   Enter the **Desired Payout** (the amount you want to receive *after* offer and fees).
+        *   (Optional) Select an **Offer Percentage** from the dropdown or choose "Custom" and enter a percentage (0-100).
         *   Click **Calculate Selling Price**.
         *   The calculator shows:
-            *   **Selling Price (Before Discount):** The price needed before the offer (`Desired Payout / (1 - Fee Percentage)`).
-            *   **Uber Fee:** Calculated on the Selling Price Before Discount.
-            *   **Discount Amount:** The value of the offer applied.
-            *   **Actual Payout:** Matches the Desired Payout input.
+            *   **Selling Price (Before Discount):** The base price needed.
+            *   **Discount Amount:** The value of the offer.
             *   **Final Price (Customer Pays):** The price after the offer.
-        *   *Example (No Offer):* Desired Payout `Rs. 700`, Fee `30%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Actual Payout `Rs. 700`, Final Price `Rs. 1000`.
-        *   *Example (With Offer):* Desired Payout `Rs. 700`, Fee `30%`, Offer `10%`. Result: Selling Price `Rs. 1000`, Fee `Rs. 300`, Discount `Rs. 100`, Actual Payout `Rs. 700`, Final Price `Rs. 900`.
+            *   **Uber Fee:** Calculated on the Final Price.
+            *   **Actual Payout:** Should match your Desired Payout input.
+        *   *Example:* Desired Payout `Rs. 700`, Fee `30%`, Offer `10%`.
+            *   `Required Price After Discount = 700 / (1 - 0.30) = 1000`
+            *   `Selling Price Before Discount = 1000 / (1 - 0.10) = 1111.11`
+            *   Result: SP (Before Discount) `Rs. 1111.11`, Discount `Rs. 111.11`, Customer Pays `Rs. 1000.00`, Fee `Rs. 300.00`, Actual Payout `Rs. 700.00`.
     *   **Payout Calculator Tab:**
-        *   Enter the **Selling Price (Before Discount)** (the price listed *before* any offer).
-        *   (Optional) Select an **Offer Percentage** from the dropdown (0-100) or choose "Custom" and enter a percentage.
-        *   Click **Calculate Payout**.
+        *   Enter the **Selling Price (Before Discount)** for the first item.
+        *   (Optional) Select or enter an **Offer Percentage** for that item.
+        *   Click **Add Another Item** to add more items, entering their Selling Price and Offer %.
+        *   Click **Calculate Total Payout**.
         *   The calculator shows:
-            *   **Final Price (Customer Pays):** `Selling Price (Before Discount) * (1 - Offer Percentage)`.
-            *   **Discount Given:** The value of the offer applied.
-            *   **Uber Fee:** Calculated based on the *Final Price (Customer Pays)* (`Final Price * Fee Percentage`).
-            *   **Payout (Seller Receives):** The amount the seller gets after the offer and fee (`Final Price - Uber Fee`).
-        *   *Example (No Offer):* Selling Price Before Discount `Rs. 1000`, Fee `30%`. Result: Customer Pays `Rs. 1000`, Discount `Rs. 0`, Fee `Rs. 300`, Seller Receives `Rs. 700`.
-        *   *Example (With Offer):* Selling Price Before Discount `Rs. 1000`, Fee `30%`, Offer `10%`. Result: Customer Pays `Rs. 900`, Discount `Rs. 100`, Fee `Rs. 270` (30% of 900), Seller Receives `Rs. 630` (900 - 270).
+            *   **Total Final Price (Customer Pays):** Sum of discounted prices for all items.
+            *   **Total Discount Given:** Sum of discounts for all items.
+            *   **Total Uber Fee:** Calculated based on the *Total Final Price (Customer Pays)*.
+            *   **Total Payout (Seller Receives):** The final amount the seller gets (`Total Final Price - Total Uber Fee`).
+        *   *Example (Two Items):* Fee `30%`
+            *   Item 1: SP (Before Disc) `Rs. 1000`, Offer `10%` -> Customer Pays `Rs. 900`
+            *   Item 2: SP (Before Disc) `Rs. 500`, Offer `0%` -> Customer Pays `Rs. 500`
+            *   Result: Total Customer Pays `Rs. 1400.00`, Total Discount `Rs. 100.00`, Total Fee (`1400 * 0.30`) `Rs. 420.00`, Total Seller Payout (`1400 - 420`) `Rs. 980.00`.
 3.  **Settings:**
     *   Click the gear icon (⚙️) in the top-right corner to open the Settings modal.
     *   Adjust the "Uber Fee Percentage" and "Currency Symbol".
     *   Click "Save Changes". Settings are saved in `localStorage`.
 4.  **History:**
     *   Expand the "View Calculation History" accordion below the calculator.
-    *   Your recent calculations will be displayed in a table, including offer details.
+    *   Your recent **Selling Price Calculator** calculations will be displayed.
     *   Click the "Clear" button within the history section to remove all saved history entries from `localStorage`.
 
 ## LocalStorage Details
@@ -104,36 +123,24 @@ The application uses the browser's `localStorage` to store data persistently on 
 *   **Settings Key:** `uberFeeCalculatorSettings`
     *   **Format:** JSON string representing an object like `{"feePercentage": 0.3, "currencySymbol": "Rs."}`.
 *   **History Key:** `uberFeeCalculatorHistory`
-    *   **Format:** JSON string representing an array of calculation objects. Each object contains details like `id`, `timestamp`, `type` (`selling-price` or `payout`), `input` value, `feePercentage`, `discountPercentage` (the offer %), calculated `fee`, `discountAmount`, `result`, `finalPrice`, and `currencySymbol`. See `src/types/history.ts` for detailed field descriptions.
+    *   **Format:** JSON string representing an array of calculation objects (currently only for 'selling-price' type calculations). See `src/types/history.ts` for detailed field descriptions.
 
 ```json
 [
   {
     "id": "unique_id_1",
     "timestamp": 1678886400000,
-    "type": "selling-price", // Desired Payout -> Final Price
+    "type": "selling-price", // Desired Payout -> SP Before Disc
     "input": 700, // Desired Payout (X)
     "feePercentage": 0.30,
     "discountPercentage": 0.10, // 10% Offer
-    "fee": 300, // Fee = (700 / (1 - 0.30)) * 0.30
-    "discountAmount": 100, // Discount = (700 / (1 - 0.30)) * 0.10
-    "result": 1000, // Selling Price Before Discount = 700 / (1 - 0.30)
-    "finalPrice": 900, // Customer Pays = 1000 * (1 - 0.10)
-    "currencySymbol": "Rs."
-  },
-  {
-    "id": "unique_id_2",
-    "timestamp": 1678896400000,
-    "type": "payout", // SP (Before Disc) -> Payout
-    "input": 1000, // Selling Price Before Discount
-    "feePercentage": 0.30,
-    "discountPercentage": 0.10, // 10% Offer was applied
-    "fee": 270, // Fee = (1000 * (1 - 0.10)) * 0.30 = 900 * 0.30
-    "discountAmount": 100, // Discount = 1000 * 0.10
-    "result": 630, // Payout = (1000 * (1 - 0.10)) - 270 = 900 - 270
-    "finalPrice": 900, // Customer Pays = 1000 * (1 - 0.10)
+    "fee": 300, // Fee = (SP_BD * (1-Disc%)) * Fee% = (1111.11 * 0.9) * 0.3 = 1000 * 0.3
+    "discountAmount": 111.11, // Discount = SP_BD * Disc% = 1111.11 * 0.10
+    "result": 1111.11, // Selling Price Before Discount = DesiredPayout / ((1-Disc%) * (1-Fee%))
+    "finalPrice": 1000.00, // Customer Pays = SP_BD * (1 - Disc%)
     "currencySymbol": "Rs."
   }
+  // Note: 'payout' type entries (especially multi-item) are not currently added to history
 ]
 ```
 

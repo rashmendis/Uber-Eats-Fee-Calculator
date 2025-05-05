@@ -7,11 +7,12 @@ export interface HistoryEntry {
   /**
    * 'selling-price': Calculates the Selling Price based on Desired Payout.
    * 'payout': Calculates the Payout based on Selling Price Before Discount.
+   * NOTE: Payout calculation history is currently only saved for single-item calculations.
    */
   type: 'selling-price' | 'payout';
   /**
    * The primary value entered by the user.
-   * If type is 'selling-price', this is the Desired Payout (X) the seller wants to receive.
+   * If type is 'selling-price', this is the Desired Payout the seller wants to receive.
    * If type is 'payout', this is the Selling Price *before* any discount was applied.
    */
   input: number;
@@ -22,8 +23,7 @@ export interface HistoryEntry {
   discountPercentage: number;
   /**
    * The calculated fee amount.
-   * If type is 'selling-price', fee is based on Selling Price *before* discount.
-   * If type is 'payout', fee is based on Selling Price *after* discount (Final Price Customer Pays).
+   * Fee is always calculated based on the Final Price (Customer Pays).
    */
   fee: number;
   /**
@@ -32,12 +32,12 @@ export interface HistoryEntry {
   discountAmount: number;
   /**
    * The calculated main result.
-   * If type is 'selling-price', this is the Selling Price *before* discount (SP = X / (1 - Fee%)).
-   * If type is 'payout', this is the Payout the seller receives (Price After Discount * (1 - Fee%)).
+   * If type is 'selling-price', this is the Selling Price *before* discount.
+   * If type is 'payout', this is the Payout the seller receives.
    */
   result: number;
   /**
-   * The final price the customer pays.
+   * The final price the customer pays (after discount).
    * Calculated as: Selling Price Before Discount * (1 - Discount %).
    */
   finalPrice: number;
