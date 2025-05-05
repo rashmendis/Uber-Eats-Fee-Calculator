@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2, Hash } from 'lucide-react'; // Added PlusCircle, Trash2, Hash
+import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2, Hash, Minus } from 'lucide-react'; // Added Minus
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history';
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants';
@@ -453,7 +453,9 @@ export default function FeeCalculator() {
               return item;
           })
       );
-      // Auto-recalculation handled by effect if needed, or triggered by button
+      // Reset payout results when any item changes, requiring recalculation
+      setPayoutCalcResults(null);
+      setHasCalculatedPayout(false);
   };
 
   const addPayoutItem = () => {
@@ -562,11 +564,10 @@ export default function FeeCalculator() {
             // DO NOT add to history here automatically
        }
     } else if (activeTab === 'payout' && hasCalculatedPayout && payoutItems.some(item => item.sellingPrice !== '')) {
+       // Recalculate payout only if inputs change AFTER initial calculation
        const results = calculatePayoutLogic(payoutItems, feePercentage);
-       // Check if results actually changed before setting state to prevent loops
        if (JSON.stringify(results) !== JSON.stringify(payoutCalcResults)) {
            setPayoutCalcResults(results);
-           // DO NOT add to history here automatically
        }
     }
 }, [
@@ -582,6 +583,7 @@ export default function FeeCalculator() {
     calculatePayoutLogic, // Calculation function dependency
     sellingPriceCalcResults, // Current results to prevent loop (SP tab)
     payoutCalcResults, // Current results to prevent loop (Payout tab)
+    // Remove handlePayoutItemChange from dependency array to prevent loops
 ]);
 
 
@@ -744,18 +746,18 @@ export default function FeeCalculator() {
                        </span>
                      </div>
 
-                     {/* Discount Amount - De-emphasized */}
-                     {spCalcDiscountPercentage > 0 && (
+                      {/* Combined Discount / Offer */}
+                      {spCalcDiscountPercentage > 0 && (
                         <div className="flex justify-between items-center">
-                          <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground"> {/* Muted color */}
-                            <Tag className="h-4 w-4" />
-                             Discount Amount ({displayDiscountPercentage(spCalcDiscountPercentage)}%)
+                          <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                            <Minus className="h-4 w-4" />
+                            Offer ({displayDiscountPercentage(spCalcDiscountPercentage)}%)
                           </Label>
-                          <span className="font-semibold text-sm text-muted-foreground"> {/* Muted color */}
-                            - {formatCurrency(sellingPriceCalcResults?.discountAmount ?? null)}
+                          <span className="font-semibold text-sm text-muted-foreground">
+                            {formatCurrency(sellingPriceCalcResults?.discountAmount ?? null)}
                           </span>
                         </div>
-                     )}
+                      )}
 
                      {/* Final Customer Price - De-emphasized */}
                      <div className="flex justify-between items-center">
@@ -776,23 +778,22 @@ export default function FeeCalculator() {
                        </span>
                      </div>
 
-
-                    {/* Calculated Fee - De-emphasized */}
-                    <div className="flex justify-between items-center">
-                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground"> {/* Muted color */}
-                          <Percent className="h-4 w-4" />
-                          Uber Fee ({displayFeePercentage}%)
-                           <Tooltip delayDuration={100}>
-                             <TooltipTrigger asChild>
-                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                             </TooltipTrigger>
-                             <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">Calculated based on the 'Final Price (Customer Pays)'.</p>
-                             </TooltipContent>
-                           </Tooltip>
+                     {/* Combined Uber Fee */}
+                     <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                         <Minus className="h-4 w-4" />
+                         Uber Fee ({displayFeePercentage}%)
+                         <Tooltip delayDuration={100}>
+                           <TooltipTrigger asChild>
+                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                           </TooltipTrigger>
+                           <TooltipContent side="top" className="max-w-xs">
+                             <p className="text-xs">Calculated based on the 'Final Price (Customer Pays)'.</p>
+                           </TooltipContent>
+                         </Tooltip>
                        </Label>
-                       <span className={cn("font-semibold text-sm text-muted-foreground", sellingPriceCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}> {/* Muted color */}
-                         - {formatCurrency(sellingPriceCalcResults?.feeAmount ?? null)}
+                       <span className={cn("font-semibold text-sm text-muted-foreground", sellingPriceCalcResults?.feeAmount !== null ? "" : "text-muted-foreground")}>
+                         {formatCurrency(sellingPriceCalcResults?.feeAmount ?? null)}
                        </span>
                      </div>
 
@@ -944,37 +945,37 @@ export default function FeeCalculator() {
                        </span>
                      </div>
 
-                     {/* Total Discount Amount - De-emphasized */}
+                     {/* Combined Total Discount */}
                      {payoutItems.some(item => getPayoutItemDiscountPercentage(item) > 0) && (
                         <div className="flex justify-between items-center">
-                           <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground"> {/* Muted color */}
-                              <Tag className="h-4 w-4" />
+                           <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                              <Minus className="h-4 w-4" />
                               Total Discount Given
                            </Label>
-                           <span className="font-semibold text-sm text-muted-foreground"> {/* Muted color */}
-                              - {formatCurrency(payoutCalcResults?.totalDiscountAmount ?? null)}
+                           <span className="font-semibold text-sm text-muted-foreground">
+                              {formatCurrency(payoutCalcResults?.totalDiscountAmount ?? null)}
                            </span>
                         </div>
                      )}
 
-                     {/* Total Uber Fee - De-emphasized */}
-                    <div className="flex justify-between items-center">
-                      <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground"> {/* Muted color */}
-                         <Percent className="h-4 w-4" />
-                         Total Uber Fee ({displayFeePercentage}%)
-                         <Tooltip delayDuration={100}>
-                             <TooltipTrigger asChild>
-                                <Info className="h-3 w-3 text-muted-foreground cursor-help" />
-                             </TooltipTrigger>
-                             <TooltipContent side="top" className="max-w-xs">
-                                <p className="text-xs">Calculated based on the 'Subtotal (Customer Pays)'.</p>
-                             </TooltipContent>
-                          </Tooltip>
-                      </Label>
-                      <span className={cn("font-semibold text-sm text-muted-foreground", payoutCalcResults?.totalFeeAmount !== null ? "" : "text-muted-foreground")}> {/* Muted color */}
-                         - {formatCurrency(payoutCalcResults?.totalFeeAmount ?? null)}
-                      </span>
-                    </div>
+                     {/* Combined Total Uber Fee */}
+                     <div className="flex justify-between items-center">
+                       <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground">
+                          <Minus className="h-4 w-4" />
+                          Total Uber Fee ({displayFeePercentage}%)
+                          <Tooltip delayDuration={100}>
+                              <TooltipTrigger asChild>
+                                 <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                 <p className="text-xs">Calculated based on the 'Subtotal (Customer Pays)'.</p>
+                              </TooltipContent>
+                           </Tooltip>
+                       </Label>
+                       <span className={cn("font-semibold text-sm text-muted-foreground", payoutCalcResults?.totalFeeAmount !== null ? "" : "text-muted-foreground")}>
+                          {formatCurrency(payoutCalcResults?.totalFeeAmount ?? null)}
+                       </span>
+                     </div>
 
 
                     {/* Separator */}
@@ -1008,3 +1009,4 @@ export default function FeeCalculator() {
     </TooltipProvider>
   );
 }
+
