@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2, Hash, Minus } from 'lucide-react'; // Added Minus
+import { Percent, Tag, Info, Calculator, CircleDollarSign, HandCoins, ReceiptText, PlusCircle, Trash2, Hash, Minus } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import type { HistoryEntry } from '@/types/history';
 import { HISTORY_STORAGE_KEY, SETTINGS_STORAGE_KEY, DEFAULT_FEE_PERCENTAGE, DEFAULT_CURRENCY_SYMBOL, MAX_HISTORY_LENGTH } from '@/lib/constants';
@@ -836,7 +836,7 @@ export default function FeeCalculator() {
                      {/* Combined Uber Fee */}
                      <div className="flex flex-wrap justify-between items-center gap-1">
                        <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
-                         <Minus className="h-4 w-4" />
+                         <Percent className="h-4 w-4" />
                          Uber Fee ({displayFeePercentage}%)
                          <Tooltip delayDuration={100}>
                            <TooltipTrigger asChild>
@@ -1020,7 +1020,7 @@ export default function FeeCalculator() {
                      {/* Combined Total Uber Fee */}
                      <div className="flex flex-wrap justify-between items-center gap-1">
                        <Label className="flex items-center gap-2 font-medium text-sm text-muted-foreground flex-shrink-0">
-                          <Minus className="h-4 w-4" />
+                          <Percent className="h-4 w-4" />
                           Total Uber Fee ({displayFeePercentage}%)
                           <Tooltip delayDuration={100}>
                               <TooltipTrigger asChild>
